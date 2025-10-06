@@ -261,3 +261,4 @@ cards:
           service: bmw_ix3_plugin.update_ios_widget
           service_data:
             force_update: true
+

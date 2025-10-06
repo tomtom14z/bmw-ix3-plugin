@@ -57,3 +57,4 @@ Voir le fichier `configuration.yaml` pour les exemples de configuration.
 ## Support
 
 Ce plugin est développé spécifiquement pour BMW iX3 et V2C Trydan.
+

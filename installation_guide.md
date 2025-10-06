@@ -233,3 +233,4 @@ Pour obtenir de l'aide :
 - Sauvegardez régulièrement votre configuration
 - Gardez une copie de vos paramètres personnalisés
 - Documentez vos modifications
+

@@ -20,9 +20,9 @@ async def async_setup_entry(hass: HomeAssistant, entry):
     hass.data[DOMAIN][entry.entry_id] = {}
     
     # Configuration des composants
-    await hass.config_entries.async_forward_entry_setup(entry, "sensor")
-    await hass.config_entries.async_forward_entry_setup(entry, "switch")
-    await hass.config_entries.async_forward_entry_setup(entry, "number")
+    await hass.config_entries.async_forward_entry_setups(
+        entry, ["sensor", "switch", "number"]
+    )
     
     return True
 

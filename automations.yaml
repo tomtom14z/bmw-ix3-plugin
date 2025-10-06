@@ -164,3 +164,4 @@
         departure_time: "{{ states('input_datetime.bmw_ix3_departure_time') }}"
         target_soc: "{{ states('number.bmw_ix3_target_soc') | float }}"
         charging_power: "{{ states('sensor.bmw_ix3_charging_power') | float(7.4) }}"
+

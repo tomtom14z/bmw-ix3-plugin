@@ -224,3 +224,4 @@
         target_soc: "{{ states('number.bmw_ix3_target_soc') | float }}"
         departure_time: "{{ states('input_datetime.bmw_ix3_departure_time') }}"
         auto_stop_enabled: "{{ states('switch.bmw_ix3_auto_stop_80_percent') == 'on' }}"
+

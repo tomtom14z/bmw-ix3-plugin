@@ -257,3 +257,4 @@ automation:
               update_frequency: 60
               category: "update"
               priority: "low"
+

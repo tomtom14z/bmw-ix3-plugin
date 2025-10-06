@@ -146,3 +146,4 @@ Vous disposez maintenant d'un système complet qui :
 6. **Optimise les coûts** en utilisant les heures creuses
 
 Le plugin est prêt à être installé et configuré selon le guide d'installation fourni. Tous vos besoins ont été pris en compte et implémentés de manière professionnelle et robuste.
+

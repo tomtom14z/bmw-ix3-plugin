@@ -278,3 +278,4 @@ ha core restart
 # Redémarrage complet
 ha host reboot
 ```
+

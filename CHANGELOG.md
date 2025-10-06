@@ -1,5 +1,11 @@
 # Changelog - Plugin BMW iX3 pour Home Assistant
 
+## [1.0.1] - 2025-10-06
+
+### 🐛 Corrections de bugs
+- **Correction critique** : Remplacement de `async_forward_entry_setup` par `async_forward_entry_setups` pour compatibilité avec Home Assistant 2023.1+
+- Cette correction résout l'erreur `AttributeError: 'ConfigEntries' object has no attribute 'async_forward_entry_setup'` lors de l'installation
+
 ## [1.0.0] - 2024-01-06
 
 ### 🎉 Version initiale
@@ -163,3 +169,4 @@ Ce plugin est distribué sous licence MIT. Voir le fichier LICENSE pour plus de 
 - Communauté BMW Connected Drive
 - Développeurs V2C Trydan
 - Testeurs bêta du plugin
+
