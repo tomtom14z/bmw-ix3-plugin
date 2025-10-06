@@ -1,0 +1,263 @@
+# Tableau de bord personnalisé pour BMW iX3
+# À intégrer dans votre configuration Lovelace
+
+title: BMW iX3 - Tableau de bord
+path: bmw-ix3
+icon: mdi:car-electric
+panel: false
+cards:
+  # En-tête avec informations principales
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          # 🚗 BMW iX3 - Tableau de bord
+          **État actuel de votre véhicule électrique**
+      
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.bmw_ix3_battery_level
+            name: Niveau de batterie
+            unit: "%"
+            min: 0
+            max: 100
+            severity:
+              green: 50
+              yellow: 20
+              red: 10
+            needle: true
+          
+          - type: gauge
+            entity: sensor.bmw_ix3_range_electric
+            name: Autonomie
+            unit: "km"
+            min: 0
+            max: 400
+            severity:
+              green: 200
+              yellow: 100
+              red: 50
+            needle: true
+
+  # État de charge et contrôles
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          ## 🔌 État de charge
+      
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.bmw_ix3_charging_status
+            name: État de charge
+            icon: mdi:ev-station
+          
+          - type: entity
+            entity: sensor.bmw_ix3_charging_power
+            name: Puissance
+            icon: mdi:lightning-bolt
+      
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: switch.v2c_charging
+            name: Contrôle V2C
+            icon: mdi:power
+            
+          - type: entity
+            entity: switch.bmw_ix3_auto_stop_80_percent
+            name: Arrêt auto 80%
+            icon: mdi:battery-charging-80
+
+  # Calculs de temps de charge
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          ## ⏱️ Temps de charge estimés
+      
+      - type: horizontal-stack
+        cards:
+          - type: entities
+            title: Charge 3.7kW
+            entities:
+              - entity: sensor.bmw_ix3_charge_time_80_3_7kw
+                name: "→ 80%"
+              - entity: sensor.bmw_ix3_charge_time_100_3_7kw
+                name: "→ 100%"
+          
+          - type: entities
+            title: Charge 7.4kW
+            entities:
+              - entity: sensor.bmw_ix3_charge_time_80_7_4kw
+                name: "→ 80%"
+              - entity: sensor.bmw_ix3_charge_time_100_7_4kw
+                name: "→ 100%"
+      
+      - type: horizontal-stack
+        cards:
+          - type: entities
+            title: Charge 11kW
+            entities:
+              - entity: sensor.bmw_ix3_charge_time_80_11kw
+                name: "→ 80%"
+              - entity: sensor.bmw_ix3_charge_time_100_11kw
+                name: "→ 100%"
+          
+          - type: entities
+            title: Charge 22kW
+            entities:
+              - entity: sensor.bmw_ix3_charge_time_80_22kw
+                name: "→ 80%"
+              - entity: sensor.bmw_ix3_charge_time_100_22kw
+                name: "→ 100%"
+
+  # Planification de charge
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          ## 📅 Planification de charge
+          *Configurez votre heure de départ pour une charge optimisée*
+      
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: number.bmw_ix3_departure_time
+            name: Heure de départ
+            icon: mdi:clock-outline
+          
+          - type: entity
+            entity: number.bmw_ix3_target_soc
+            name: SOC cible
+            icon: mdi:battery-charging
+      
+      - type: markdown
+        content: |
+          ### 🎯 Charge optimisée
+          Le système calculera automatiquement l'heure de début de charge optimale
+          pour atteindre votre pourcentage cible à l'heure de départ souhaitée.
+      
+      - type: button
+        name: Calculer charge optimale
+        icon: mdi:calculator
+        tap_action:
+          action: call-service
+          service: bmw_ix3_plugin.schedule_charging
+          service_data:
+            departure_time: "{{ states('number.bmw_ix3_departure_time') }}"
+            target_soc: "{{ states('number.bmw_ix3_target_soc') | float }}"
+
+  # Informations V2C
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          ## 🔌 Borne V2C Trydan
+      
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.v2c_status
+            name: État V2C
+            icon: mdi:ev-station
+          
+          - type: entity
+            entity: sensor.v2c_charging_power
+            name: Puissance V2C
+            icon: mdi:lightning-bolt
+          
+          - type: entity
+            entity: sensor.v2c_charging_current
+            name: Courant V2C
+            icon: mdi:current-ac
+
+  # Actions rapides
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          ## ⚡ Actions rapides
+      
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: Démarrer charge
+            icon: mdi:play
+            tap_action:
+              action: call-service
+              service: switch.turn_on
+              target:
+                entity_id: switch.v2c_charging
+          
+          - type: button
+            name: Arrêter charge
+            icon: mdi:stop
+            tap_action:
+              action: call-service
+              service: switch.turn_off
+              target:
+                entity_id: switch.v2c_charging
+          
+          - type: button
+            name: Mettre à jour widget
+            icon: mdi:refresh
+            tap_action:
+              action: call-service
+              service: bmw_ix3_plugin.update_ios_widget
+              service_data:
+                force_update: true
+
+  # Historique et statistiques
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          ## 📊 Informations détaillées
+      
+      - type: entities
+        title: Données techniques
+        entities:
+          - entity: sensor.bmw_ix3_battery_level
+            name: Niveau de batterie
+            icon: mdi:battery
+          - entity: sensor.bmw_ix3_charging_status
+            name: État de charge
+            icon: mdi:ev-station
+          - entity: sensor.bmw_ix3_charging_power
+            name: Puissance de charge
+            icon: mdi:lightning-bolt
+          - entity: sensor.bmw_ix3_range_electric
+            name: Autonomie électrique
+            icon: mdi:map-marker-distance
+          - entity: sensor.v2c_status
+            name: État V2C
+            icon: mdi:ev-station
+          - entity: sensor.v2c_charging_power
+            name: Puissance V2C
+            icon: mdi:lightning-bolt
+          - entity: sensor.v2c_charging_current
+            name: Courant V2C
+            icon: mdi:current-ac
+
+  # Widget iOS Live Activity
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          ## 📱 Widget iOS Live Activity
+          *Votre widget iPhone affiche en temps réel :*
+          - Pourcentage de charge actuel
+          - Heure prévue d'atteinte de 80% et 100%
+          - Mise à jour automatique toutes les 5 minutes
+      
+      - type: button
+        name: Forcer mise à jour widget
+        icon: mdi:cellphone-arrow-down
+        tap_action:
+          action: call-service
+          service: bmw_ix3_plugin.update_ios_widget
+          service_data:
+            force_update: true

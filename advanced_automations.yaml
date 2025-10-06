@@ -1,0 +1,226 @@
+# Automatisations avancées pour le plugin BMW iX3
+
+# Calcul intelligent de l'heure de début de charge
+- id: bmw_ix3_smart_charging_scheduler
+  alias: "BMW iX3 - Planificateur intelligent"
+  description: "Calcule automatiquement l'heure de début de charge optimale"
+  trigger:
+    - platform: state
+      entity_id: input_datetime.bmw_ix3_departure_time
+    - platform: state
+      entity_id: number.bmw_ix3_target_soc
+    - platform: state
+      entity_id: sensor.bmw_ix3_battery_level
+  condition:
+    - condition: template
+      value_template: "{{ states('input_boolean.bmw_ix3_charging_scheduled') == 'on' }}"
+  action:
+    - service: python_script.bmw_ix3_calculate_charging_schedule
+      data:
+        departure_time: "{{ states('input_datetime.bmw_ix3_departure_time') }}"
+        target_soc: "{{ states('number.bmw_ix3_target_soc') | float }}"
+        current_soc: "{{ states('sensor.bmw_ix3_battery_level') | float }}"
+        charging_power: "{{ states('sensor.bmw_ix3_charging_power') | float(7.4) }}"
+
+# Optimisation tarifaire (heures creuses)
+- id: bmw_ix3_off_peak_optimization
+  alias: "BMW iX3 - Optimisation heures creuses"
+  description: "Optimise la charge pendant les heures creuses"
+  trigger:
+    - platform: time
+      at: "22:00:00"  # Début des heures creuses
+  condition:
+    - condition: template
+      value_template: "{{ states('input_boolean.bmw_ix3_charging_scheduled') == 'on' }}"
+    - condition: numeric_state
+      entity_id: sensor.bmw_ix3_battery_level
+      below: "{{ states('number.bmw_ix3_target_soc') | float - 10 }}"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.v2c_charging
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Optimisation tarifaire"
+        message: "💰 Démarrage de la charge pendant les heures creuses"
+
+# Arrêt automatique avant la fin des heures creuses
+- id: bmw_ix3_stop_off_peak
+  alias: "BMW iX3 - Arrêt heures creuses"
+  description: "Arrête la charge avant la fin des heures creuses si le SOC cible est atteint"
+  trigger:
+    - platform: time
+      at: "06:00:00"  # Fin des heures creuses
+  condition:
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "CHARGING"
+    - condition: numeric_state
+      entity_id: sensor.bmw_ix3_battery_level
+      above: "{{ states('number.bmw_ix3_target_soc') | float - 5 }}"
+  action:
+    - service: switch.turn_off
+      entity_id: switch.v2c_charging
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Fin heures creuses"
+        message: "⏰ Arrêt de la charge - Fin des heures creuses"
+
+# Protection batterie avancée
+- id: bmw_ix3_battery_protection
+  alias: "BMW iX3 - Protection batterie avancée"
+  description: "Protection avancée de la batterie avec arrêt progressif"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.bmw_ix3_battery_level
+      above: 95
+      for:
+        minutes: 2
+  condition:
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "CHARGING"
+    - condition: state
+      entity_id: switch.bmw_ix3_auto_stop_80_percent
+      state: "on"
+  action:
+    - service: switch.turn_off
+      entity_id: switch.v2c_charging
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Protection batterie"
+        message: "🛡️ Charge arrêtée à 95% pour protéger la batterie"
+
+# Surveillance de la température de charge
+- id: bmw_ix3_temperature_monitoring
+  alias: "BMW iX3 - Surveillance température"
+  description: "Surveille la température et ajuste la charge si nécessaire"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.bmw_ix3_battery_temperature  # À créer si disponible
+      above: 35
+      for:
+        minutes: 5
+  condition:
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "CHARGING"
+  action:
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Température élevée"
+        message: "🌡️ Température de batterie élevée - Réduction de la puissance de charge"
+    - service: bmw_ix3_plugin.adjust_charging_power
+      data:
+        power_reduction: 0.5  # Réduction de 50%
+
+# Gestion des pannes de courant
+- id: bmw_ix3_power_outage_handling
+  alias: "BMW iX3 - Gestion panne de courant"
+  description: "Gère les pannes de courant et redémarre la charge"
+  trigger:
+    - platform: state
+      entity_id: sensor.v2c_status
+      to: "ERROR"
+      for:
+        minutes: 2
+  action:
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Panne de courant"
+        message: "⚡ Panne de courant détectée - Surveillance de la récupération"
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.bmw_ix3_power_outage_detected
+
+# Redémarrage automatique après panne
+- id: bmw_ix3_auto_restart_after_outage
+  alias: "BMW iX3 - Redémarrage après panne"
+  description: "Redémarre automatiquement la charge après une panne"
+  trigger:
+    - platform: state
+      entity_id: sensor.v2c_status
+      from: "ERROR"
+      to: "READY"
+  condition:
+    - condition: state
+      entity_id: input_boolean.bmw_ix3_power_outage_detected
+      state: "on"
+    - condition: template
+      value_template: "{{ states('input_boolean.bmw_ix3_charging_scheduled') == 'on' }}"
+  action:
+    - delay: "00:05:00"  # Attendre 5 minutes pour stabilisation
+    - service: switch.turn_on
+      entity_id: switch.v2c_charging
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.bmw_ix3_power_outage_detected
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Redémarrage automatique"
+        message: "🔄 Charge redémarrée automatiquement après la panne"
+
+# Optimisation selon la météo
+- id: bmw_ix3_weather_optimization
+  alias: "BMW iX3 - Optimisation météo"
+  description: "Ajuste la charge selon les conditions météorologiques"
+  trigger:
+    - platform: state
+      entity_id: weather.home  # À adapter selon votre capteur météo
+  condition:
+    - condition: template
+      value_template: "{{ states('input_boolean.bmw_ix3_weather_optimization') == 'on' }}"
+  action:
+    - service: python_script.bmw_ix3_weather_charge_adjustment
+      data:
+        temperature: "{{ state_attr('weather.home', 'temperature') }}"
+        condition: "{{ states('weather.home') }}"
+
+# Rappel de déconnexion
+- id: bmw_ix3_reminder_disconnect
+  alias: "BMW iX3 - Rappel déconnexion"
+  description: "Rappelle de déconnecter le câble après la charge"
+  trigger:
+    - platform: state
+      entity_id: sensor.bmw_ix3_charging_status
+      to: "COMPLETE"
+  action:
+    - delay: "00:30:00"  # Attendre 30 minutes
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "COMPLETE"
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Rappel déconnexion"
+        message: "🔌 N'oubliez pas de déconnecter le câble de charge"
+        data:
+          actions:
+            - action: "DISMISS"
+              title: "OK"
+            - action: "REMIND_LATER"
+              title: "Rappeler plus tard"
+
+# Statistiques de charge quotidiennes
+- id: bmw_ix3_daily_stats
+  alias: "BMW iX3 - Statistiques quotidiennes"
+  description: "Génère des statistiques de charge quotidiennes"
+  trigger:
+    - platform: time
+      at: "23:59:00"
+  action:
+    - service: python_script.bmw_ix3_daily_statistics
+      data:
+        date: "{{ now().strftime('%Y-%m-%d') }}"
+
+# Sauvegarde des paramètres de charge
+- id: bmw_ix3_backup_settings
+  alias: "BMW iX3 - Sauvegarde paramètres"
+  description: "Sauvegarde les paramètres de charge personnalisés"
+  trigger:
+    - platform: state
+      entity_id: number.bmw_ix3_target_soc
+    - platform: state
+      entity_id: input_datetime.bmw_ix3_departure_time
+  action:
+    - service: python_script.bmw_ix3_backup_user_settings
+      data:
+        target_soc: "{{ states('number.bmw_ix3_target_soc') | float }}"
+        departure_time: "{{ states('input_datetime.bmw_ix3_departure_time') }}"
+        auto_stop_enabled: "{{ states('switch.bmw_ix3_auto_stop_80_percent') == 'on' }}"

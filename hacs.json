@@ -1,0 +1,9 @@
+{
+  "name": "BMW iX3 Plugin",
+  "content_in_root": false,
+  "filename": "bmw_ix3_plugin",
+  "country": ["FR", "DE", "US", "GB", "IT", "ES", "NL", "BE", "CH", "AT"],
+  "homeassistant": "2023.1.0",
+  "render_readme": true,
+  "iot_class": "Cloud Polling"
+}

@@ -1,0 +1,15 @@
+{
+  "domain": "bmw_ix3_plugin",
+  "name": "BMW iX3 Plugin",
+  "documentation": "https://github.com/tomtom14z/bmw-ix3-plugin",
+  "dependencies": [],
+  "codeowners": ["@tomtom14z"],
+  "requirements": [
+    "aiohttp>=3.8.0",
+    "async_timeout>=4.0.0"
+  ],
+  "version": "1.0.0",
+  "config_flow": true,
+  "iot_class": "cloud_polling",
+  "integration_type": "hub"
+}

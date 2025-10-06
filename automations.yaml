@@ -1,0 +1,166 @@
+# Automatisations pour le plugin BMW iX3
+
+# Arrêt automatique à 80% pour protéger la batterie
+- id: bmw_ix3_auto_stop_80_percent
+  alias: "BMW iX3 - Arrêt auto à 80%"
+  description: "Arrête automatiquement la charge à 80% pour protéger la batterie"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.bmw_ix3_battery_level
+      above: 79.5
+      for:
+        minutes: 1
+  condition:
+    - condition: state
+      entity_id: switch.bmw_ix3_auto_stop_80_percent
+      state: "on"
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "CHARGING"
+  action:
+    - service: switch.turn_off
+      entity_id: switch.v2c_charging
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Protection batterie"
+        message: "🔋 Charge arrêtée automatiquement à 80% pour protéger la batterie"
+        data:
+          notification_type: "auto_stop_80"
+
+# Notification de début de charge
+- id: bmw_ix3_charging_start_notification
+  alias: "BMW iX3 - Notification début charge"
+  description: "Envoie une notification quand la charge commence"
+  trigger:
+    - platform: state
+      entity_id: sensor.bmw_ix3_charging_status
+      from: "NOT_CHARGING"
+      to: "CHARGING"
+  action:
+    - service: bmw_ix3_plugin.send_charging_notification
+      data:
+        notification_type: "charging_start"
+        battery_level: "{{ states('sensor.bmw_ix3_battery_level') | float }}"
+        charging_power: "{{ states('sensor.bmw_ix3_charging_power') | float }}"
+
+# Notification à 80% de charge
+- id: bmw_ix3_charging_80_notification
+  alias: "BMW iX3 - Notification 80%"
+  description: "Envoie une notification quand la charge atteint 80%"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.bmw_ix3_battery_level
+      above: 79.5
+      for:
+        minutes: 1
+  condition:
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "CHARGING"
+  action:
+    - service: bmw_ix3_plugin.send_charging_notification
+      data:
+        notification_type: "charging_80"
+        battery_level: "{{ states('sensor.bmw_ix3_battery_level') | float }}"
+        charging_power: "{{ states('sensor.bmw_ix3_charging_power') | float }}"
+
+# Notification de fin de charge (100%)
+- id: bmw_ix3_charging_100_notification
+  alias: "BMW iX3 - Notification 100%"
+  description: "Envoie une notification quand la charge est terminée"
+  trigger:
+    - platform: state
+      entity_id: sensor.bmw_ix3_charging_status
+      to: "COMPLETE"
+  action:
+    - service: bmw_ix3_plugin.send_charging_notification
+      data:
+        notification_type: "charging_100"
+        battery_level: "{{ states('sensor.bmw_ix3_battery_level') | float }}"
+
+# Mise à jour du widget iOS pendant la charge
+- id: bmw_ix3_ios_widget_update_charging
+  alias: "BMW iX3 - Mise à jour widget iOS (charge)"
+  description: "Met à jour le widget iOS toutes les 5 minutes pendant la charge"
+  trigger:
+    - platform: time_pattern
+      minutes: "/5"
+  condition:
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "CHARGING"
+  action:
+    - service: bmw_ix3_plugin.update_ios_widget
+      data:
+        force_update: true
+
+# Mise à jour du widget iOS toutes les 15 minutes (hors charge)
+- id: bmw_ix3_ios_widget_update_normal
+  alias: "BMW iX3 - Mise à jour widget iOS (normal)"
+  description: "Met à jour le widget iOS toutes les 15 minutes"
+  trigger:
+    - platform: time_pattern
+      minutes: "/15"
+  condition:
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "NOT_CHARGING"
+  action:
+    - service: bmw_ix3_plugin.update_ios_widget
+
+# Démarrage de charge programmé
+- id: bmw_ix3_scheduled_charging_start
+  alias: "BMW iX3 - Démarrage charge programmée"
+  description: "Démarre la charge à l'heure programmée"
+  trigger:
+    - platform: time
+      at: "{{ states('input_datetime.bmw_ix3_charging_start_time') }}"
+  condition:
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "NOT_CHARGING"
+    - condition: numeric_state
+      entity_id: sensor.bmw_ix3_battery_level
+      below: "{{ states('number.bmw_ix3_target_soc') | float - 5 }}"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.v2c_charging
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Charge programmée"
+        message: "🚗 Démarrage de la charge programmée pour atteindre {{ states('number.bmw_ix3_target_soc') }}% à {{ states('input_datetime.bmw_ix3_departure_time') }}"
+
+# Arrêt de charge programmé
+- id: bmw_ix3_scheduled_charging_stop
+  alias: "BMW iX3 - Arrêt charge programmée"
+  description: "Arrête la charge à l'heure programmée"
+  trigger:
+    - platform: time
+      at: "{{ states('input_datetime.bmw_ix3_charging_stop_time') }}"
+  condition:
+    - condition: state
+      entity_id: sensor.bmw_ix3_charging_status
+      state: "CHARGING"
+  action:
+    - service: switch.turn_off
+      entity_id: switch.v2c_charging
+    - service: notify.mobile_app_iphone
+      data:
+        title: "BMW iX3 - Arrêt programmé"
+        message: "⏹️ Arrêt de la charge programmée - Batterie à {{ states('sensor.bmw_ix3_battery_level') }}%"
+
+# Calcul automatique des heures de charge
+- id: bmw_ix3_calculate_charging_times
+  alias: "BMW iX3 - Calcul heures de charge"
+  description: "Calcule automatiquement les heures de début et fin de charge"
+  trigger:
+    - platform: state
+      entity_id: input_datetime.bmw_ix3_departure_time
+    - platform: state
+      entity_id: number.bmw_ix3_target_soc
+  action:
+    - service: bmw_ix3_plugin.schedule_charging
+      data:
+        departure_time: "{{ states('input_datetime.bmw_ix3_departure_time') }}"
+        target_soc: "{{ states('number.bmw_ix3_target_soc') | float }}"
+        charging_power: "{{ states('sensor.bmw_ix3_charging_power') | float(7.4) }}"

@@ -1,0 +1,259 @@
+# Configuration du widget iOS Live Activity pour BMW iX3
+# À intégrer dans votre configuration Home Assistant
+
+# Configuration des notifications pour le widget
+notify:
+  - name: bmw_ix3_widget_notifications
+    platform: group
+    services:
+      - service: mobile_app_iphone
+        data:
+          title: "BMW iX3 - État de charge"
+          message: "{{ message }}"
+          data:
+            # Données pour le widget Live Activity
+            live_activity:
+              enabled: true
+              update_frequency: 300  # 5 minutes
+              entities:
+                - sensor.bmw_ix3_battery_level
+                - sensor.bmw_ix3_charging_status
+                - sensor.bmw_ix3_charging_power
+                - sensor.bmw_ix3_charge_time_80_7_4kw
+                - sensor.bmw_ix3_charge_time_100_7_4kw
+              display_format: "Batterie: {{ states('sensor.bmw_ix3_battery_level') }}% | Puissance: {{ states('sensor.bmw_ix3_charging_power') }} kW | Fin 80%: {{ state_attr('sensor.bmw_ix3_charge_time_80_7_4kw', 'target_time_formatted') }}"
+
+# Scripts pour la mise à jour du widget
+script:
+  bmw_ix3_update_widget_charging:
+    alias: "BMW iX3 - Mise à jour widget (charge)"
+    sequence:
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3 - Charge en cours"
+          message: |
+            🔋 {{ states('sensor.bmw_ix3_battery_level') }}%
+            ⚡ {{ states('sensor.bmw_ix3_charging_power') }} kW
+            🕐 80%: {{ state_attr('sensor.bmw_ix3_charge_time_80_7_4kw', 'target_time_formatted') }}
+            🕐 100%: {{ state_attr('sensor.bmw_ix3_charge_time_100_7_4kw', 'target_time_formatted') }}
+          data:
+            live_activity:
+              enabled: true
+              update_frequency: 60  # 1 minute pendant la charge
+              category: "charging"
+              priority: "high"
+
+  bmw_ix3_update_widget_normal:
+    alias: "BMW iX3 - Mise à jour widget (normal)"
+    sequence:
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3 - État normal"
+          message: |
+            🔋 {{ states('sensor.bmw_ix3_battery_level') }}%
+            🚗 {{ states('sensor.bmw_ix3_range_electric') }} km
+            🔌 {{ states('sensor.bmw_ix3_charging_status') }}
+          data:
+            live_activity:
+              enabled: true
+              update_frequency: 900  # 15 minutes en mode normal
+              category: "normal"
+              priority: "low"
+
+  bmw_ix3_widget_charging_complete:
+    alias: "BMW iX3 - Widget charge terminée"
+    sequence:
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3 - Charge terminée"
+          message: |
+            ✅ Charge terminée à {{ states('sensor.bmw_ix3_battery_level') }}%
+            🚗 Autonomie: {{ states('sensor.bmw_ix3_range_electric') }} km
+            🔌 N'oubliez pas de déconnecter le câble
+          data:
+            live_activity:
+              enabled: false  # Désactiver le widget
+              category: "complete"
+              priority: "high"
+            actions:
+              - action: "DISMISS"
+                title: "OK"
+              - action: "REMIND_DISCONNECT"
+                title: "Rappeler déconnexion"
+
+# Automatisations pour le widget
+automation:
+  # Mise à jour du widget pendant la charge
+  - id: bmw_ix3_widget_charging_updates
+    alias: "BMW iX3 - Mise à jour widget charge"
+    description: "Met à jour le widget toutes les minutes pendant la charge"
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    condition:
+      - condition: state
+        entity_id: sensor.bmw_ix3_charging_status
+        state: "CHARGING"
+    action:
+      - service: script.bmw_ix3_update_widget_charging
+
+  # Mise à jour du widget en mode normal
+  - id: bmw_ix3_widget_normal_updates
+    alias: "BMW iX3 - Mise à jour widget normal"
+    description: "Met à jour le widget toutes les 15 minutes en mode normal"
+    trigger:
+      - platform: time_pattern
+        minutes: "/15"
+    condition:
+      - condition: state
+        entity_id: sensor.bmw_ix3_charging_status
+        state: "NOT_CHARGING"
+    action:
+      - service: script.bmw_ix3_update_widget_normal
+
+  # Désactivation du widget à la fin de charge
+  - id: bmw_ix3_widget_charging_complete
+    alias: "BMW iX3 - Widget fin de charge"
+    description: "Désactive le widget quand la charge est terminée"
+    trigger:
+      - platform: state
+        entity_id: sensor.bmw_ix3_charging_status
+        to: "COMPLETE"
+    action:
+      - service: script.bmw_ix3_widget_charging_complete
+
+  # Activation du widget au début de charge
+  - id: bmw_ix3_widget_charging_start
+    alias: "BMW iX3 - Widget début de charge"
+    description: "Active le widget quand la charge commence"
+    trigger:
+      - platform: state
+        entity_id: sensor.bmw_ix3_charging_status
+        from: "NOT_CHARGING"
+        to: "CHARGING"
+    action:
+      - service: script.bmw_ix3_update_widget_charging
+
+# Configuration des entités pour le widget
+sensor:
+  - platform: template
+    sensors:
+      bmw_ix3_widget_battery_level:
+        friendly_name: "BMW iX3 - Widget Batterie"
+        value_template: "{{ states('sensor.bmw_ix3_battery_level') }}%"
+        icon_template: >
+          {% if states('sensor.bmw_ix3_battery_level') | int >= 80 %}
+            mdi:battery-charging-80
+          {% elif states('sensor.bmw_ix3_battery_level') | int >= 60 %}
+            mdi:battery-charging-60
+          {% elif states('sensor.bmw_ix3_battery_level') | int >= 40 %}
+            mdi:battery-charging-40
+          {% elif states('sensor.bmw_ix3_battery_level') | int >= 20 %}
+            mdi:battery-charging-20
+          {% else %}
+            mdi:battery-charging-10
+          {% endif %}
+
+      bmw_ix3_widget_charging_status:
+        friendly_name: "BMW iX3 - Widget État"
+        value_template: >
+          {% if states('sensor.bmw_ix3_charging_status') == 'CHARGING' %}
+            🔌 Charge en cours
+          {% elif states('sensor.bmw_ix3_charging_status') == 'COMPLETE' %}
+            ✅ Charge terminée
+          {% else %}
+            🔋 Prêt
+          {% endif %}
+        icon_template: >
+          {% if states('sensor.bmw_ix3_charging_status') == 'CHARGING' %}
+            mdi:ev-station
+          {% elif states('sensor.bmw_ix3_charging_status') == 'COMPLETE' %}
+            mdi:check-circle
+          {% else %}
+            mdi:car-electric
+          {% endif %}
+
+      bmw_ix3_widget_charging_power:
+        friendly_name: "BMW iX3 - Widget Puissance"
+        value_template: "{{ states('sensor.bmw_ix3_charging_power') }} kW"
+        icon_template: "mdi:lightning-bolt"
+
+      bmw_ix3_widget_eta_80:
+        friendly_name: "BMW iX3 - Widget ETA 80%"
+        value_template: "{{ state_attr('sensor.bmw_ix3_charge_time_80_7_4kw', 'target_time_formatted') }}"
+        icon_template: "mdi:clock-outline"
+
+      bmw_ix3_widget_eta_100:
+        friendly_name: "BMW iX3 - Widget ETA 100%"
+        value_template: "{{ state_attr('sensor.bmw_ix3_charge_time_100_7_4kw', 'target_time_formatted') }}"
+        icon_template: "mdi:clock-outline"
+
+# Configuration des actions rapides pour le widget
+input_select:
+  bmw_ix3_widget_quick_actions:
+    name: "BMW iX3 - Actions rapides widget"
+    options:
+      - "Démarrer charge"
+      - "Arrêter charge"
+      - "Mettre à jour"
+      - "Voir détails"
+    initial: "Voir détails"
+    icon: mdi:gesture-tap
+
+# Scripts pour les actions rapides du widget
+script:
+  bmw_ix3_widget_start_charging:
+    alias: "BMW iX3 - Widget démarrer charge"
+    sequence:
+      - service: switch.turn_on
+        entity_id: switch.v2c_charging
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3"
+          message: "🚗 Charge démarrée depuis le widget"
+
+  bmw_ix3_widget_stop_charging:
+    alias: "BMW iX3 - Widget arrêter charge"
+    sequence:
+      - service: switch.turn_off
+        entity_id: switch.v2c_charging
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3"
+          message: "⏹️ Charge arrêtée depuis le widget"
+
+  bmw_ix3_widget_refresh:
+    alias: "BMW iX3 - Widget actualiser"
+    sequence:
+      - service: bmw_ix3_plugin.update_ios_widget
+        data:
+          force_update: true
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3"
+          message: "🔄 Widget actualisé"
+
+# Configuration des notifications push pour le widget
+automation:
+  # Notification de changement d'état pour le widget
+  - id: bmw_ix3_widget_state_change
+    alias: "BMW iX3 - Widget changement d'état"
+    description: "Notifie le widget des changements d'état importants"
+    trigger:
+      - platform: state
+        entity_id: sensor.bmw_ix3_battery_level
+        for:
+          minutes: 1
+      - platform: state
+        entity_id: sensor.bmw_ix3_charging_status
+    action:
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3 - Mise à jour"
+          message: "État mis à jour"
+          data:
+            live_activity:
+              enabled: true
+              update_frequency: 60
+              category: "update"
+              priority: "low"

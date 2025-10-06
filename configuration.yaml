@@ -1,0 +1,152 @@
+# Configuration pour le plugin BMW iX3
+# À ajouter dans votre configuration.yaml principal
+
+# Intégration BMW iX3 Plugin
+bmw_ix3_plugin:
+  bmw_username: !secret bmw_username
+  bmw_password: !secret bmw_password
+  v2c_ip: !secret v2c_ip
+  v2c_username: !secret v2c_username
+  v2c_password: !secret v2c_password
+
+# Entrées d'aide pour la planification
+input_datetime:
+  bmw_ix3_departure_time:
+    name: "BMW iX3 - Heure de départ"
+    has_date: false
+    has_time: true
+    initial: "08:00:00"
+  
+  bmw_ix3_charging_start_time:
+    name: "BMW iX3 - Heure début charge"
+    has_date: false
+    has_time: true
+    initial: "02:00:00"
+  
+  bmw_ix3_charging_stop_time:
+    name: "BMW iX3 - Heure fin charge"
+    has_date: false
+    has_time: true
+    initial: "07:30:00"
+
+# Entrées booléennes pour les options
+input_boolean:
+  bmw_ix3_auto_stop_enabled:
+    name: "BMW iX3 - Arrêt auto activé"
+    initial: true
+    icon: mdi:battery-charging-80
+  
+  bmw_ix3_charging_scheduled:
+    name: "BMW iX3 - Charge programmée"
+    initial: false
+    icon: mdi:calendar-clock
+
+# Entrées de sélection pour les modes de charge
+input_select:
+  bmw_ix3_charging_mode:
+    name: "BMW iX3 - Mode de charge"
+    options:
+      - "Économique (80%)"
+      - "Complet (100%)"
+      - "Personnalisé"
+    initial: "Économique (80%)"
+    icon: mdi:battery-charging
+
+# Scripts personnalisés
+script:
+  bmw_ix3_start_charging:
+    alias: "BMW iX3 - Démarrer charge"
+    sequence:
+      - service: switch.turn_on
+        entity_id: switch.v2c_charging
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3"
+          message: "🚗 Charge démarrée"
+      - service: bmw_ix3_plugin.send_charging_notification
+        data:
+          notification_type: "charging_start"
+          battery_level: "{{ states('sensor.bmw_ix3_battery_level') | float }}"
+          charging_power: "{{ states('sensor.bmw_ix3_charging_power') | float }}"
+
+  bmw_ix3_stop_charging:
+    alias: "BMW iX3 - Arrêter charge"
+    sequence:
+      - service: switch.turn_off
+        entity_id: switch.v2c_charging
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3"
+          message: "⏹️ Charge arrêtée"
+      - service: bmw_ix3_plugin.send_charging_notification
+        data:
+          notification_type: "charging_stop"
+          battery_level: "{{ states('sensor.bmw_ix3_battery_level') | float }}"
+
+  bmw_ix3_schedule_optimal_charging:
+    alias: "BMW iX3 - Planifier charge optimale"
+    sequence:
+      - service: bmw_ix3_plugin.schedule_charging
+        data:
+          departure_time: "{{ states('input_datetime.bmw_ix3_departure_time') }}"
+          target_soc: "{{ states('number.bmw_ix3_target_soc') | float }}"
+          charging_power: "{{ states('sensor.bmw_ix3_charging_power') | float(7.4) }}"
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.bmw_ix3_charging_scheduled
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3 - Charge planifiée"
+          message: "📅 Charge programmée pour {{ states('input_datetime.bmw_ix3_departure_time') }}"
+
+  bmw_ix3_update_widget:
+    alias: "BMW iX3 - Mettre à jour widget"
+    sequence:
+      - service: bmw_ix3_plugin.update_ios_widget
+        data:
+          force_update: true
+      - service: notify.mobile_app_iphone
+        data:
+          title: "BMW iX3"
+          message: "📱 Widget mis à jour"
+
+# Scènes pour différents modes de charge
+scene:
+  bmw_ix3_economy_charging:
+    name: "BMW iX3 - Charge économique"
+    entities:
+      number.bmw_ix3_target_soc: 80
+      switch.bmw_ix3_auto_stop_80_percent: "on"
+      input_select.bmw_ix3_charging_mode: "Économique (80%)"
+
+  bmw_ix3_full_charging:
+    name: "BMW iX3 - Charge complète"
+    entities:
+      number.bmw_ix3_target_soc: 100
+      switch.bmw_ix3_auto_stop_80_percent: "off"
+      input_select.bmw_ix3_charging_mode: "Complet (100%)"
+
+  bmw_ix3_custom_charging:
+    name: "BMW iX3 - Charge personnalisée"
+    entities:
+      number.bmw_ix3_target_soc: 90
+      switch.bmw_ix3_auto_stop_80_percent: "off"
+      input_select.bmw_ix3_charging_mode: "Personnalisé"
+
+# Notifications personnalisées
+notify:
+  - name: bmw_ix3_notifications
+    platform: group
+    services:
+      - service: mobile_app_iphone
+        data:
+          title: "BMW iX3"
+          message: "{{ message }}"
+          data:
+            notification_type: "{{ notification_type }}"
+            battery_level: "{{ battery_level }}"
+            charging_power: "{{ charging_power }}"
+
+# Intégrations nécessaires (à configurer séparément)
+# BMW Connected Drive (intégration officielle)
+# V2C Trydan (intégration officielle)
+# Home Assistant Companion (pour les notifications iOS)
