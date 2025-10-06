@@ -3,6 +3,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from ..const import CONF_V2C_IP
 from .bmw_sensor import BMWiX3Sensor
 from .charge_calculator import ChargeTimeCalculator
 from .v2c_sensor import V2CSensor
@@ -35,11 +36,16 @@ async def async_setup_entry(
         ChargeTimeCalculator(coordinator, "charge_time_100_22kw", "Temps charge 100% (22kW)", "22", target_soc=100),
     ]
     
-    # Capteurs V2C
-    v2c_sensors = [
-        V2CSensor(coordinator, "v2c_status", "État V2C", None, "mdi:ev-station"),
-        V2CSensor(coordinator, "v2c_charging_power", "Puissance V2C", "kW", "mdi:lightning-bolt"),
-        V2CSensor(coordinator, "v2c_charging_current", "Courant V2C", "A", "mdi:current-ac"),
-    ]
+    # Liste des entités à ajouter
+    entities = bmw_sensors + charge_calculators
     
-    async_add_entities(bmw_sensors + charge_calculators + v2c_sensors)
+    # Ajouter les capteurs V2C uniquement si la borne est configurée
+    if config_entry.data.get(CONF_V2C_IP):
+        v2c_sensors = [
+            V2CSensor(coordinator, "v2c_status", "État V2C", None, "mdi:ev-station"),
+            V2CSensor(coordinator, "v2c_charging_power", "Puissance V2C", "kW", "mdi:lightning-bolt"),
+            V2CSensor(coordinator, "v2c_charging_current", "Courant V2C", "A", "mdi:current-ac"),
+        ]
+        entities.extend(v2c_sensors)
+    
+    async_add_entities(entities)

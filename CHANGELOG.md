@@ -5,6 +5,9 @@
 ### 🐛 Corrections de bugs
 - **Correction critique** : Remplacement de `async_forward_entry_setup` par `async_forward_entry_setups` pour compatibilité avec Home Assistant 2023.1+
 - Cette correction résout l'erreur `AttributeError: 'ConfigEntries' object has no attribute 'async_forward_entry_setup'` lors de l'installation
+- **Configuration V2C facultative** : L'intégration de la borne V2C Trydan est maintenant optionnelle lors de la configuration initiale
+- Les capteurs et switches V2C ne sont créés que si une borne est configurée
+- Possibilité d'utiliser le plugin uniquement avec la BMW iX3 sans borne de charge
 
 ## [1.0.0] - 2024-01-06
 

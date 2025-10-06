@@ -22,7 +22,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_BMW_USERNAME): str,
         vol.Required(CONF_BMW_PASSWORD): str,
-        vol.Required(CONF_V2C_IP): str,
+        vol.Optional(CONF_V2C_IP, default=""): str,
         vol.Optional(CONF_V2C_USERNAME, default="admin"): str,
         vol.Optional(CONF_V2C_PASSWORD, default=""): str,
     }
@@ -49,12 +49,16 @@ class BMWiX3ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input[CONF_BMW_PASSWORD]
                 )
                 
-                # Test de connexion V2C (simulation)
-                await self._test_v2c_connection(
-                    user_input[CONF_V2C_IP],
-                    user_input[CONF_V2C_USERNAME],
-                    user_input[CONF_V2C_PASSWORD]
-                )
+                # Test de connexion V2C uniquement si IP fournie
+                if user_input.get(CONF_V2C_IP):
+                    await self._test_v2c_connection(
+                        user_input[CONF_V2C_IP],
+                        user_input.get(CONF_V2C_USERNAME, "admin"),
+                        user_input.get(CONF_V2C_PASSWORD, "")
+                    )
+                    _LOGGER.info("Configuration V2C activée")
+                else:
+                    _LOGGER.info("Configuration V2C non activée (sera disponible ultérieurement)")
 
                 return self.async_create_entry(
                     title="BMW iX3 Plugin",
