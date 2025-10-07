@@ -1,5 +1,24 @@
 # Changelog - Plugin BMW iX3 pour Home Assistant
 
+## [1.0.2] - 2025-10-06
+
+### ✨ Nouvelles fonctionnalités
+- **Synchronisation flexible avec BMW** : Le plugin récupère maintenant les vraies données de votre véhicule
+- **Compatible avec BMW Connected Drive ET BMW CarData** : Détection automatique de l'intégration disponible
+- Détection intelligente des entités BMW avec recherche étendue (battery, soc, state_of_charge, etc.)
+- Logs informatifs affichant le pourcentage de batterie, l'état de charge et l'autonomie lors de chaque mise à jour
+
+### 🔧 Améliorations
+- Recherche flexible des entités BMW (compatible avec différents noms d'entités)
+- Validation des valeurs pour éviter les erreurs (batterie entre 0-100%, autonomie positive, etc.)
+- Meilleure gestion des erreurs lors de la récupération des données
+- Logs de débogage détaillés montrant les entités détectées
+- Avertissement si aucune entité BMW n'est trouvée
+
+### 📝 Notes importantes
+- Suite aux problèmes de l'API BMW Connected Drive, le plugin est compatible avec BMW CarData comme alternative
+- Le plugin détecte automatiquement l'intégration disponible (Connected Drive ou CarData)
+
 ## [1.0.1] - 2025-10-06
 
 ### 🐛 Corrections de bugs

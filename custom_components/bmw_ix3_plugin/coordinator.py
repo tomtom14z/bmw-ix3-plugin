@@ -70,24 +70,102 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
     async def _update_bmw_data(self) -> Dict[str, Any]:
         """Mise à jour des données BMW."""
         try:
-            # Simulation des données BMW - à remplacer par l'API réelle
-            # Ici, vous devriez utiliser l'intégration BMW Connected Drive existante
-            # ou implémenter votre propre client API
+            # Récupération des données depuis l'intégration BMW 
+            # (Compatible avec BMW Connected Drive, BMW CarData, etc.)
+            hass = self.hass
             
+            # Recherche de l'entité BMW iX3 dans Home Assistant
+            bmw_entities = {
+                "battery_level": None,
+                "charging_status": None,
+                "charging_power": None,
+                "range_electric": None,
+            }
+            
+            detected_entities = []
+            
+            # Parcourir toutes les entités pour trouver celles de BMW
+            for entity_id in hass.states.async_entity_ids():
+                # Recherche flexible : bmw, ix3, cardata, etc.
+                entity_lower = entity_id.lower()
+                if not any(keyword in entity_lower for keyword in ["bmw", "ix3", "cardata"]):
+                    continue
+                
+                state = hass.states.get(entity_id)
+                if not state or state.state in ("unknown", "unavailable", "None"):
+                    continue
+                
+                detected_entities.append(entity_id)
+                
+                # Niveau de batterie - recherche étendue
+                if any(keyword in entity_lower for keyword in 
+                       ["battery", "soc", "state_of_charge", "charge_level", "battery_percent"]):
+                    try:
+                        value = float(state.state)
+                        if 0 <= value <= 100:  # Validation
+                            bmw_entities["battery_level"] = value
+                            _LOGGER.debug("Batterie trouvée: %s = %s%%", entity_id, value)
+                    except (ValueError, TypeError):
+                        pass
+                
+                # État de charge - recherche étendue
+                elif any(keyword in entity_lower for keyword in 
+                        ["charging_status", "charge_status", "charging_state"]):
+                    status = state.state.upper()
+                    bmw_entities["charging_status"] = status
+                    _LOGGER.debug("État charge trouvé: %s = %s", entity_id, status)
+                
+                # Puissance de charge
+                elif any(keyword in entity_lower for keyword in 
+                        ["charging_power", "charge_power", "power_kw"]):
+                    try:
+                        value = float(state.state)
+                        if value >= 0:  # Validation
+                            bmw_entities["charging_power"] = value
+                            _LOGGER.debug("Puissance trouvée: %s = %s kW", entity_id, value)
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Autonomie électrique
+                elif any(keyword in entity_lower for keyword in 
+                        ["range", "autonomie", "remaining_range", "electric_range"]):
+                    try:
+                        value = float(state.state)
+                        if value >= 0:  # Validation
+                            bmw_entities["range_electric"] = value
+                            _LOGGER.debug("Autonomie trouvée: %s = %s km", entity_id, value)
+                    except (ValueError, TypeError):
+                        pass
+            
+            # Log des entités détectées
+            if detected_entities:
+                _LOGGER.info("Entités BMW détectées: %s", ", ".join(detected_entities[:5]))
+            else:
+                _LOGGER.warning("Aucune entité BMW trouvée. Vérifiez l'installation de BMW Connected Drive ou BMW CarData")
+            
+            # Construction des données BMW
             bmw_data = {
-                "battery_level": 65.0,  # Pourcentage de charge
-                "charging_status": "CHARGING",  # CHARGING, NOT_CHARGING, COMPLETE
-                "charging_power": 7.4,  # kW
-                "range_electric": 280,  # km
+                "battery_level": bmw_entities.get("battery_level") or 0.0,
+                "charging_status": bmw_entities.get("charging_status") or "UNKNOWN",
+                "charging_power": bmw_entities.get("charging_power") or 0.0,
+                "range_electric": bmw_entities.get("range_electric") or 0.0,
                 "last_update": datetime.now().isoformat(),
             }
             
-            _LOGGER.debug("Données BMW mises à jour: %s", bmw_data)
+            _LOGGER.info("🚗 BMW iX3 - Batterie: %s%%, État: %s, Autonomie: %s km", 
+                        bmw_data["battery_level"], bmw_data["charging_status"], bmw_data["range_electric"])
+            
             return bmw_data
             
         except Exception as err:
             _LOGGER.error("Erreur lors de la récupération des données BMW: %s", err)
-            return {}
+            return {
+                "battery_level": 0.0,
+                "charging_status": "ERROR",
+                "charging_power": 0.0,
+                "range_electric": 0.0,
+                "last_update": datetime.now().isoformat(),
+            }
 
     async def _update_v2c_data(self) -> Dict[str, Any]:
         """Mise à jour des données V2C."""

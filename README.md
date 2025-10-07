@@ -17,10 +17,12 @@ Plugin personnalisé pour BMW iX3 électrique permettant :
 
 ## Prérequis
 
-- BMW iX3 avec BMW Connected Drive activé
-- Borne V2C Trydan compatible Home Assistant
+- BMW iX3 avec **BMW Connected Drive** OU **BMW CarData** activé
+  - ⚠️ **Note importante** : Suite aux problèmes de l'API BMW Connected Drive depuis octobre 2025, il est recommandé d'utiliser **BMW CarData HA** comme alternative
+  - Le plugin détecte automatiquement l'intégration disponible
+- Borne V2C Trydan (optionnelle)
 - Home Assistant avec accès aux intégrations personnalisées
-- Application Home Assistant Companion sur iPhone
+- Application Home Assistant Companion sur iPhone (pour le widget iOS)
 
 ## Fonctionnalités
 
