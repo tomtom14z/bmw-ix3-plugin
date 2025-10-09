@@ -18,7 +18,9 @@
 ### 📝 Notes importantes
 - Suite aux problèmes de l'API BMW Connected Drive, le plugin est compatible avec BMW CarData comme alternative
 - Le plugin détecte automatiquement l'intégration disponible (Connected Drive ou CarData)
-- Support de l'entité "Forecast Electric Range During Charging" pour l'autonomie électrique
+- **Optimisation BMW CarData** : Détection précise des entités spécifiques BMW CarData HA
+- Support complet des entités : "State of Charge", "Charging Status", "Predicted charge speed", "Forecast Electric Range", etc.
+- Nouvelle carte optimisée `bmw_ix3_cardata_optimized.yaml` pour afficher toutes les données BMW CarData
 
 ## [1.0.1] - 2025-10-06
 

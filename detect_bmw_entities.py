@@ -36,15 +36,15 @@ Copiez ces noms d'entités dans votre configuration :
 
 ## 🔧 Détection Automatique du Plugin
 
-Le plugin BMW iX3 recherche automatiquement ces entités :
-- **Batterie** : mots-clés (battery, soc, state_of_charge, charge_level, battery_percent)
-- **État de charge** : mots-clés (charging_status, charge_status, charging_state)
-- **Puissance** : mots-clés (charging_power, charge_power, power_kw)
-- **Autonomie** : mots-clés (range, autonomie, remaining_range, electric_range, forecast_electric_range)
+Le plugin BMW iX3 recherche automatiquement ces entités BMW CarData :
+- **Batterie** : "State of Charge", "Battery Charge Level", "SOC"
+- **État de charge** : "Charging Status", "HV Charging Status"
+- **Puissance** : "Predicted charge speed", "Charging Power"
+- **Autonomie** : "Forecast Electric Range", "Electric Range", "Range"
 
 ### Vos entités correspondantes :
 
-{% set battery_entities = bmw_entities | selectattr('entity_id', 'match', '.*(battery|soc|state_of_charge|charge_level).*') | list -%}
+{% set battery_entities = bmw_entities | selectattr('name', 'match', '.*(state of charge|battery charge level|soc).*') | list -%}
 {% if battery_entities %}
 **🔋 Batterie :**
 {% for entity in battery_entities -%}
@@ -52,7 +52,7 @@ Le plugin BMW iX3 recherche automatiquement ces entités :
 {% endfor %}
 {% endif %}
 
-{% set charging_entities = bmw_entities | selectattr('entity_id', 'match', '.*(charging_status|charge_status|charging_state).*') | list -%}
+{% set charging_entities = bmw_entities | selectattr('name', 'match', '.*(charging status|hv charging status).*') | list -%}
 {% if charging_entities %}
 **⚡ État de charge :**
 {% for entity in charging_entities -%}
@@ -60,7 +60,7 @@ Le plugin BMW iX3 recherche automatiquement ces entités :
 {% endfor %}
 {% endif %}
 
-{% set power_entities = bmw_entities | selectattr('entity_id', 'match', '.*(charging_power|charge_power|power).*') | list -%}
+{% set power_entities = bmw_entities | selectattr('name', 'match', '.*(predicted charge speed|charging power).*') | list -%}
 {% if power_entities %}
 **🔌 Puissance :**
 {% for entity in power_entities -%}
@@ -68,7 +68,7 @@ Le plugin BMW iX3 recherche automatiquement ces entités :
 {% endfor %}
 {% endif %}
 
-{% set range_entities = bmw_entities | selectattr('entity_id', 'match', '.*(range|autonomie|remaining|forecast_electric_range).*') | list -%}
+{% set range_entities = bmw_entities | selectattr('name', 'match', '.*(forecast electric range|electric range|range).*') | list -%}
 {% if range_entities %}
 **🛣️ Autonomie :**
 {% for entity in range_entities -%}

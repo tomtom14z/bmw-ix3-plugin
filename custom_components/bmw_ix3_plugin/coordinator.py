@@ -84,11 +84,11 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
             
             detected_entities = []
             
-            # Parcourir toutes les entités pour trouver celles de BMW
+            # Parcourir toutes les entités pour trouver celles de BMW CarData
             for entity_id in hass.states.async_entity_ids():
-                # Recherche flexible : bmw, ix3, cardata, etc.
+                # Recherche flexible : bmw, ix3, cardata, bimmerdata, etc.
                 entity_lower = entity_id.lower()
-                if not any(keyword in entity_lower for keyword in ["bmw", "ix3", "cardata"]):
+                if not any(keyword in entity_lower for keyword in ["bmw", "ix3", "cardata", "bimmerdata"]):
                     continue
                 
                 state = hass.states.get(entity_id)
@@ -96,10 +96,12 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
                     continue
                 
                 detected_entities.append(entity_id)
+                entity_name = state.name.lower()
                 
-                # Niveau de batterie - recherche étendue
-                if any(keyword in entity_lower for keyword in 
-                       ["battery", "soc", "state_of_charge", "charge_level", "battery_percent"]):
+                # Niveau de batterie - entités spécifiques BMW CarData
+                if any(keyword in entity_name for keyword in [
+                    "state of charge", "battery charge level", "soc"
+                ]):
                     try:
                         value = float(state.state)
                         if 0 <= value <= 100:  # Validation
@@ -108,16 +110,18 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
                     except (ValueError, TypeError):
                         pass
                 
-                # État de charge - recherche étendue
-                elif any(keyword in entity_lower for keyword in 
-                        ["charging_status", "charge_status", "charging_state"]):
+                # État de charge - entités spécifiques BMW CarData
+                elif any(keyword in entity_name for keyword in [
+                    "charging status", "hv charging status"
+                ]):
                     status = state.state.upper()
                     bmw_entities["charging_status"] = status
                     _LOGGER.debug("État charge trouvé: %s = %s", entity_id, status)
                 
-                # Puissance de charge
-                elif any(keyword in entity_lower for keyword in 
-                        ["charging_power", "charge_power", "power_kw"]):
+                # Puissance de charge - entités spécifiques BMW CarData
+                elif any(keyword in entity_name for keyword in [
+                    "predicted charge speed", "charging power"
+                ]):
                     try:
                         value = float(state.state)
                         if value >= 0:  # Validation
@@ -126,9 +130,10 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
                     except (ValueError, TypeError):
                         pass
                 
-                # Autonomie électrique
-                elif any(keyword in entity_lower for keyword in 
-                        ["range", "autonomie", "remaining_range", "electric_range", "forecast_electric_range"]):
+                # Autonomie électrique - entités spécifiques BMW CarData
+                elif any(keyword in entity_name for keyword in [
+                    "forecast electric range", "electric range", "range"
+                ]):
                     try:
                         value = float(state.state)
                         if value >= 0:  # Validation
