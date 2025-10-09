@@ -1,0 +1,123 @@
+# Carte animée BMW iX3 avec image du véhicule
+# À ajouter dans votre dashboard
+
+type: picture-elements
+image: /local/bmw_ix3.png  # Placez une image de votre BMW iX3 dans /config/www/bmw_ix3.png
+elements:
+  # Badge de batterie animé
+  - type: state-badge
+    entity: sensor.bmw_ix3_battery_level
+    style:
+      top: 10%
+      left: 10%
+      transform: scale(1.5)
+      filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.7))
+  
+  # Barre de batterie animée
+  - type: custom:bar-card
+    entity: sensor.bmw_ix3_battery_level
+    positions:
+      icon: 'off'
+      name: 'off'
+    height: 40px
+    width: 80%
+    style:
+      top: 85%
+      left: 50%
+    severity:
+      - color: '#FF5252'
+        from: 0
+        to: 20
+      - color: '#FFC107'
+        from: 20
+        to: 50
+      - color: '#4CAF50'
+        from: 50
+        to: 100
+    animation:
+      state: 'on'
+      speed: 2
+  
+  # État de charge avec icône animée
+  - type: state-icon
+    entity: sensor.bmw_ix3_charging_status
+    icon: mdi:ev-station
+    tap_action:
+      action: more-info
+    style:
+      top: 50%
+      left: 50%
+      transform: scale(2)
+      color: |
+        {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+          #4CAF50
+        {% else %}
+          #757575
+        {% endif %}
+      animation: |
+        {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+          pulse 2s ease-in-out infinite
+        {% endif %}
+  
+  # Autonomie
+  - type: state-label
+    entity: sensor.bmw_ix3_range_electric
+    prefix: '🔋 '
+    suffix: ' km'
+    style:
+      top: 20%
+      right: 10%
+      font-size: 24px
+      font-weight: bold
+      color: white
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8)
+  
+  # Temps de charge estimé (80%)
+  - type: state-label
+    entity: sensor.bmw_ix3_charge_time_80_7_4kw
+    prefix: '⏱️ 80%: '
+    style:
+      bottom: 25%
+      left: 10%
+      font-size: 18px
+      color: white
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8)
+  
+  # Temps de charge estimé (100%)
+  - type: state-label
+    entity: sensor.bmw_ix3_charge_time_100_7_4kw
+    prefix: '⏱️ 100%: '
+    style:
+      bottom: 15%
+      left: 10%
+      font-size: 18px
+      color: white
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8)
+  
+  # Switch arrêt auto 80%
+  - type: state-icon
+    entity: switch.bmw_ix3_auto_stop_80_percent
+    tap_action:
+      action: toggle
+    style:
+      bottom: 10%
+      right: 10%
+      transform: scale(1.5)
+
+# Animation CSS personnalisée
+card_mod:
+  style: |
+    ha-card {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(2); }
+      50% { opacity: 0.7; transform: scale(2.2); }
+    }
+    @keyframes glow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.7)); }
+      50% { filter: drop-shadow(0 0 20px rgba(0, 255, 0, 1)); }
+    }
+

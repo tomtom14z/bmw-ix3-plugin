@@ -1,0 +1,202 @@
+# Carte premium BMW iX3 avec image dynamique
+# Nécessite card-mod et custom:button-card (HACS)
+
+type: custom:button-card
+entity: sensor.bmw_ix3_battery_level
+name: BMW iX3
+show_state: true
+show_icon: false
+show_entity_picture: true
+# L'image change selon l'état de charge
+entity_picture: |
+  [[[
+    if (states['sensor.bmw_ix3_charging_status'].state === 'CHARGING')
+      return '/local/bmw_ix3_charging.png';
+    else if (parseFloat(entity.state) >= 80)
+      return '/local/bmw_ix3_full.png';
+    else if (parseFloat(entity.state) >= 50)
+      return '/local/bmw_ix3_medium.png';
+    else
+      return '/local/bmw_ix3_low.png';
+  ]]]
+styles:
+  card:
+    - background: |
+        [[[
+          if (states['sensor.bmw_ix3_charging_status'].state === 'CHARGING')
+            return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          else if (parseFloat(entity.state) >= 80)
+            return 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+          else if (parseFloat(entity.state) >= 50)
+            return 'linear-gradient(135deg, #FFC107 0%, #FFA000 100%)';
+          else
+            return 'linear-gradient(135deg, #FF5252 0%, #E53935 100%)';
+        ]]]
+    - border-radius: 20px
+    - padding: 20px
+    - box-shadow: 0 10px 30px rgba(0,0,0,0.3)
+    - animation: |
+        [[[
+          if (states['sensor.bmw_ix3_charging_status'].state === 'CHARGING')
+            return 'glow 2s ease-in-out infinite';
+        ]]]
+  grid:
+    - grid-template-areas: '"i" "n" "s" "details"'
+    - grid-template-columns: 1fr
+    - grid-template-rows: 1fr min-content min-content min-content
+  img_cell:
+    - width: 100%
+    - height: 200px
+    - border-radius: 15px
+    - margin-bottom: 10px
+  name:
+    - font-size: 28px
+    - font-weight: bold
+    - color: white
+    - text-shadow: 2px 2px 4px rgba(0,0,0,0.5)
+  state:
+    - font-size: 48px
+    - font-weight: bold
+    - color: white
+    - text-shadow: 2px 2px 4px rgba(0,0,0,0.5)
+custom_fields:
+  details:
+    card:
+      type: vertical-stack
+      cards:
+        # Informations principales
+        - type: custom:mushroom-chips-card
+          chips:
+            - type: template
+              icon: mdi:battery
+              content: '{{ states("sensor.bmw_ix3_battery_level") }}%'
+              icon_color: |
+                {% set level = states('sensor.bmw_ix3_battery_level') | int %}
+                {% if level >= 80 %}green
+                {% elif level >= 50 %}orange
+                {% else %}red
+                {% endif %}
+            - type: template
+              icon: mdi:map-marker-distance
+              content: '{{ states("sensor.bmw_ix3_range_electric") }} km'
+              icon_color: blue
+            - type: template
+              icon: |
+                {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+                  mdi:battery-charging
+                {% else %}
+                  mdi:power-plug-off
+                {% endif %}
+              content: |
+                {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+                  {{ states("sensor.bmw_ix3_charging_power") }} kW
+                {% else %}
+                  Non branchée
+                {% endif %}
+              icon_color: |
+                {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+                  green
+                {% else %}
+                  grey
+                {% endif %}
+          alignment: center
+          card_mod:
+            style: |
+              ha-card {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                border-radius: 15px;
+                margin-top: 10px;
+              }
+        
+        # Barre de progression batterie
+        - type: custom:bar-card
+          entity: sensor.bmw_ix3_battery_level
+          positions:
+            icon: 'off'
+            name: 'off'
+          height: 30px
+          severity:
+            - color: '#FF5252'
+              from: 0
+              to: 20
+            - color: '#FFC107'
+              from: 20
+              to: 50
+            - color: '#4CAF50'
+              from: 50
+              to: 100
+          animation:
+            state: 'on'
+            speed: 2
+          card_mod:
+            style: |
+              ha-card {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                margin: 10px 0;
+              }
+        
+        # Temps de charge rapide
+        - type: markdown
+          content: |
+            ### ⚡ Charge rapide (7.4kW)
+            🔋 80% dans **{{ states('sensor.bmw_ix3_charge_time_80_7_4kw') }}**
+            🔋 100% dans **{{ states('sensor.bmw_ix3_charge_time_100_7_4kw') }}**
+          card_mod:
+            style: |
+              ha-card {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                border-radius: 15px;
+                padding: 15px;
+                margin: 10px 0;
+                text-align: center;
+                color: white;
+              }
+              ha-markdown {
+                color: white !important;
+              }
+              h3 {
+                margin-top: 0;
+              }
+        
+        # Contrôles rapides
+        - type: horizontal-stack
+          cards:
+            - type: custom:mushroom-template-card
+              entity: switch.bmw_ix3_auto_stop_80_percent
+              icon: mdi:battery-80
+              icon_color: |
+                {% if is_state('switch.bmw_ix3_auto_stop_80_percent', 'on') %}
+                  green
+                {% else %}
+                  grey
+                {% endif %}
+              primary: Auto 80%
+              tap_action:
+                action: toggle
+              card_mod:
+                style: |
+                  ha-card {
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                  }
+
+# Animation de pulsation en charge
+card_mod:
+  style: |
+    @keyframes glow {
+      0%, 100% { 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      }
+      50% { 
+        box-shadow: 0 10px 40px rgba(76, 175, 80, 0.8);
+      }
+    }
+    ha-card {
+      {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+        animation: glow 2s ease-in-out infinite;
+      {% endif %}
+    }
+
