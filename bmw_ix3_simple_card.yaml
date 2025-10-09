@@ -1,0 +1,133 @@
+# Carte BMW iX3 simplifiée (sans composants HACS supplémentaires)
+# Fonctionne avec les composants de base de Home Assistant
+
+type: vertical-stack
+cards:
+  # En-tête avec statut
+  - type: markdown
+    content: |
+      ## 🚗 BMW iX3
+      {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+        ⚡ **En charge** - {{ states('sensor.bmw_ix3_battery_level') }}%
+      {% elif is_state('sensor.bmw_ix3_charging_status', 'COMPLETE') %}
+        ✅ **Chargée** - {{ states('sensor.bmw_ix3_battery_level') }}%
+      {% else %}
+        🔌 **Prête** - {{ states('sensor.bmw_ix3_battery_level') }}%
+      {% endif %}
+    card_mod:
+      style: |
+        ha-card {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          text-align: center;
+          {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+            animation: pulse 2s ease-in-out infinite;
+          {% endif %}
+        }
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); }
+          50% { box-shadow: 0 0 20px rgba(76, 175, 80, 1); }
+        }
+  
+  # Statistiques principales
+  - type: glance
+    entities:
+      - entity: sensor.bmw_ix3_battery_level
+        name: Batterie
+        icon: mdi:battery
+      - entity: sensor.bmw_ix3_range_electric
+        name: Autonomie
+        icon: mdi:map-marker-distance
+      - entity: sensor.bmw_ix3_charging_power
+        name: Puissance
+        icon: mdi:lightning-bolt
+    show_state: true
+    columns: 3
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+        }
+  
+  # Barre de batterie avec gauge
+  - type: gauge
+    entity: sensor.bmw_ix3_battery_level
+    name: Niveau de batterie
+    unit: '%'
+    min: 0
+    max: 100
+    severity:
+      green: 50
+      yellow: 20
+      red: 0
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 15px;
+        }
+  
+  # Tableau des temps de charge
+  - type: markdown
+    content: |
+      ## ⏱️ Temps de charge estimé
+      
+      | Puissance | 80% | 100% |
+      |-----------|-----|------|
+      | **3.7 kW** | {{ states('sensor.bmw_ix3_charge_time_80_3_7kw') }} | {{ states('sensor.bmw_ix3_charge_time_100_3_7kw') }} |
+      | **7.4 kW** | {{ states('sensor.bmw_ix3_charge_time_80_7_4kw') }} | {{ states('sensor.bmw_ix3_charge_time_100_7_4kw') }} |
+      | **11 kW** | {{ states('sensor.bmw_ix3_charge_time_80_11kw') }} | {{ states('sensor.bmw_ix3_charge_time_100_11kw') }} |
+      | **22 kW** | {{ states('sensor.bmw_ix3_charge_time_80_22kw') }} | {{ states('sensor.bmw_ix3_charge_time_100_22kw') }} |
+      
+      ---
+      
+      💡 **Recommandation** : Charge à 80% pour préserver la batterie
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+        }
+        ha-markdown {
+          padding: 16px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 8px;
+          text-align: center;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th {
+          font-weight: bold;
+          background: rgba(255,255,255,0.1);
+        }
+  
+  # Contrôles
+  - type: entities
+    title: 🎛️ Contrôles
+    entities:
+      - entity: switch.bmw_ix3_auto_stop_80_percent
+        name: Arrêt automatique à 80%
+        icon: mdi:battery-80
+      - entity: number.bmw_ix3_target_soc
+        name: SOC cible
+        icon: mdi:battery-charging
+      - entity: number.bmw_ix3_departure_time
+        name: Heure de départ
+        icon: mdi:clock-outline
+    card_mod:
+      style: |
+        ha-card {
+          border-radius: 15px;
+        }
+
+# Style général
+card_mod:
+  style: |
+    ha-card {
+      gap: 10px;
+    }

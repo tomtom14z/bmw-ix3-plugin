@@ -1,0 +1,164 @@
+# Carte BMW iX3 avec Mushroom + Graphique historique
+# Nécessite : card-mod + mushroom + mini-graph-card (HACS)
+
+type: vertical-stack
+cards:
+  # En-tête compact
+  - type: custom:mushroom-template-card
+    primary: BMW iX3
+    secondary: |
+      {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+        ⚡ {{ states('sensor.bmw_ix3_battery_level') }}% - {{ states('sensor.bmw_ix3_charging_power') }}kW
+      {% else %}
+        🔌 {{ states('sensor.bmw_ix3_battery_level') }}% - {{ states('sensor.bmw_ix3_range_electric') }}km
+      {% endif %}
+    icon: mdi:car-electric
+    icon_color: |
+      {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+        green
+      {% elif is_state('sensor.bmw_ix3_charging_status', 'COMPLETE') %}
+        blue
+      {% else %}
+        grey
+      {% endif %}
+    layout: horizontal
+    card_mod:
+      style: |
+        ha-card {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+            animation: pulse 2s ease-in-out infinite;
+          {% endif %}
+        }
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); }
+          50% { box-shadow: 0 0 20px rgba(76, 175, 80, 1); }
+        }
+  
+  # Chips avec informations principales
+  - type: custom:mushroom-chips-card
+    chips:
+      - type: template
+        icon: mdi:battery
+        content: '{{ states("sensor.bmw_ix3_battery_level") }}%'
+        icon_color: |
+          {% set level = states('sensor.bmw_ix3_battery_level') | int %}
+          {% if level >= 80 %}green
+          {% elif level >= 50 %}orange
+          {% else %}red
+          {% endif %}
+      - type: template
+        icon: mdi:map-marker-distance
+        content: '{{ states("sensor.bmw_ix3_range_electric") }} km'
+        icon_color: blue
+      - type: template
+        icon: |
+          {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+            mdi:battery-charging
+          {% else %}
+            mdi:power-plug-off
+          {% endif %}
+        content: |
+          {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+            {{ states("sensor.bmw_ix3_charging_power") }} kW
+          {% else %}
+            Non branchée
+          {% endif %}
+        icon_color: |
+          {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+            green
+          {% else %}
+            grey
+          {% endif %}
+    alignment: center
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 15px;
+        }
+  
+  # Barre de progression batterie
+  - type: custom:mushroom-progress-card
+    entity: sensor.bmw_ix3_battery_level
+    name: Niveau de batterie
+    icon: mdi:battery
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 15px;
+        }
+  
+  # Graphique historique (si mini-graph-card installé)
+  - type: custom:mini-graph-card
+    entities:
+      - entity: sensor.bmw_ix3_battery_level
+        name: Batterie
+        color: '#4CAF50'
+      - entity: sensor.bmw_ix3_range_electric
+        name: Autonomie
+        color: '#2196F3'
+        y_axis: secondary
+    hours_to_show: 24
+    points_per_hour: 4
+    line_width: 3
+    font_size: 75
+    animate: true
+    show:
+      fill: fade
+      icon: false
+      name: false
+      state: false
+    card_mod:
+      style: |
+        ha-card {
+          border-radius: 15px;
+          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+  
+  # Contrôles rapides
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        entity: switch.bmw_ix3_auto_stop_80_percent
+        icon: mdi:battery-80
+        icon_color: |
+          {% if is_state('switch.bmw_ix3_auto_stop_80_percent', 'on') %}
+            green
+          {% else %}
+            grey
+          {% endif %}
+        primary: Auto 80%
+        tap_action:
+          action: toggle
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(255, 255, 255, 0.1);
+              backdrop-filter: blur(10px);
+            }
+      - type: custom:mushroom-template-card
+        entity: number.bmw_ix3_target_soc
+        icon: mdi:battery-charging
+        icon_color: orange
+        primary: SOC {{ states('number.bmw_ix3_target_soc') }}%
+        tap_action:
+          action: more-info
+          entity: number.bmw_ix3_target_soc
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(255, 255, 255, 0.1);
+              backdrop-filter: blur(10px);
+            }
+
+# Style général
+card_mod:
+  style: |
+    ha-card {
+      gap: 10px;
+    }

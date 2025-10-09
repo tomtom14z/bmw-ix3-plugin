@@ -1,0 +1,37 @@
+# Carte BMW iX3 compacte avec Mushroom (optimisée mobile)
+# Nécessite : card-mod + mushroom (HACS)
+
+type: custom:mushroom-template-card
+primary: BMW iX3
+secondary: |
+  {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+    ⚡ {{ states('sensor.bmw_ix3_battery_level') }}% - {{ states('sensor.bmw_ix3_charging_power') }}kW
+  {% else %}
+    🔌 {{ states('sensor.bmw_ix3_battery_level') }}% - {{ states('sensor.bmw_ix3_range_electric') }}km
+  {% endif %}
+icon: mdi:car-electric
+icon_color: |
+  {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+    green
+  {% elif is_state('sensor.bmw_ix3_charging_status', 'COMPLETE') %}
+    blue
+  {% else %}
+    grey
+  {% endif %}
+layout: horizontal
+tap_action:
+  action: more-info
+  entity: sensor.bmw_ix3_battery_level
+card_mod:
+  style: |
+    ha-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      {% if is_state('sensor.bmw_ix3_charging_status', 'CHARGING') %}
+        animation: pulse 2s ease-in-out infinite;
+      {% endif %}
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(76, 175, 80, 1); }
+    }

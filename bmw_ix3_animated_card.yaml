@@ -13,30 +13,22 @@ elements:
       transform: scale(1.5)
       filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.7))
   
-  # Barre de batterie animée
-  - type: custom:bar-card
+  # Barre de batterie animée (Mushroom)
+  - type: custom:mushroom-progress-card
     entity: sensor.bmw_ix3_battery_level
-    positions:
-      icon: 'off'
-      name: 'off'
-    height: 40px
-    width: 80%
+    name: Batterie
+    icon: mdi:battery
     style:
       top: 85%
       left: 50%
-    severity:
-      - color: '#FF5252'
-        from: 0
-        to: 20
-      - color: '#FFC107'
-        from: 20
-        to: 50
-      - color: '#4CAF50'
-        from: 50
-        to: 100
-    animation:
-      state: 'on'
-      speed: 2
+      width: 80%
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 10px;
+        }
   
   # État de charge avec icône animée
   - type: state-icon

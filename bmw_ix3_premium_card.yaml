@@ -109,26 +109,11 @@ custom_fields:
                 margin-top: 10px;
               }
         
-        # Barre de progression batterie
-        - type: custom:bar-card
+        # Barre de progression batterie (Mushroom)
+        - type: custom:mushroom-progress-card
           entity: sensor.bmw_ix3_battery_level
-          positions:
-            icon: 'off'
-            name: 'off'
-          height: 30px
-          severity:
-            - color: '#FF5252'
-              from: 0
-              to: 20
-            - color: '#FFC107'
-              from: 20
-              to: 50
-            - color: '#4CAF50'
-              from: 50
-              to: 100
-          animation:
-            state: 'on'
-            speed: 2
+          name: Batterie
+          icon: mdi:battery
           card_mod:
             style: |
               ha-card {

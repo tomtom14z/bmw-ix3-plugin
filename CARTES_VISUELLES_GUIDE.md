@@ -10,11 +10,12 @@ Ce guide vous explique comment installer et utiliser les 3 cartes visuelles anim
 
 Installez ces composants via **HACS > Frontend** :
 
-1. **card-mod** - Pour les animations CSS personnalisées
-2. **button-card** - Pour la carte premium
-3. **bar-card** - Pour les barres de progression
-4. **mini-graph-card** - Pour les graphiques historiques
-5. **mushroom** - Pour les cartes modernes (optionnel mais recommandé)
+1. **card-mod** - Pour les animations CSS personnalisées (obligatoire)
+2. **mushroom** - Cartes modernes et barres de progression (recommandé)
+3. **button-card** - Pour la carte premium avec image dynamique (optionnel)
+4. **mini-graph-card** - Pour les graphiques historiques (optionnel)
+
+**💡 Note** : Mushroom remplace bar-card et offre des composants plus stables et modernes.
 
 ### Installation via HACS
 
@@ -49,18 +50,27 @@ Pour que les cartes animées changent d'image selon l'état, créez le dossier `
 
 ---
 
-## 🎴 Carte 1 : Picture Elements (Image Interactive)
+## 🎴 Carte 1 : Mushroom Optimisée (Recommandée)
 
 ### Description
-Carte avec image de fond et éléments interactifs superposés. Parfait pour un aperçu visuel rapide.
+Carte moderne avec tous les avantages de Mushroom : chips interactifs, barres de progression, animations fluides. **C'est la carte recommandée !**
 
 ### Installation
 
-1. Copiez le contenu de `bmw_ix3_animated_card.yaml`
+1. Copiez le contenu de `bmw_ix3_mushroom_card.yaml`
 2. Allez dans votre **Dashboard**
 3. Mode édition > **Ajouter une carte** > **Manuel**
 4. Collez le code YAML
 5. Sauvegardez
+
+### Fonctionnalités
+
+- ✅ En-tête animé avec statut en temps réel
+- ✅ Chips interactifs avec informations principales
+- ✅ Barre de progression batterie moderne
+- ✅ Contrôles avec feedback visuel
+- ✅ Tableau détaillé des temps de charge
+- ✅ Effets de transparence et flou
 
 ### Personnalisation
 
@@ -74,14 +84,14 @@ style:
 
 ---
 
-## 📊 Carte 2 : Dashboard Moderne (Tableau de Bord)
+## 📱 Carte 2 : Mushroom Compacte (Mobile)
 
 ### Description
-Tableau de bord complet avec statistiques, graphiques et contrôles. Idéal pour avoir toutes les infos en un coup d'œil.
+Carte ultra-compacte optimisée pour mobile. Parfait pour un aperçu rapide sur smartphone.
 
 ### Installation
 
-1. Copiez le contenu de `bmw_ix3_dashboard_card.yaml`
+1. Copiez le contenu de `bmw_ix3_mushroom_compact.yaml`
 2. Allez dans votre **Dashboard**
 3. Mode édition > **Ajouter une carte** > **Manuel**
 4. Collez le code YAML
@@ -89,15 +99,38 @@ Tableau de bord complet avec statistiques, graphiques et contrôles. Idéal pour
 
 ### Fonctionnalités
 
-- ✅ En-tête animé avec statut en temps réel
-- ✅ Statistiques principales (Batterie, Autonomie, Puissance)
-- ✅ Tableau des temps de charge pour toutes les puissances
-- ✅ Contrôles (Auto-stop 80%, SOC cible, Heure de départ)
-- ✅ Graphique historique 24h
+- ✅ Carte unique compacte
+- ✅ Informations essentielles en un coup d'œil
+- ✅ Animation de pulsation en charge
+- ✅ Optimisée pour mobile
+- ✅ Tap pour plus d'informations
 
 ---
 
-## 🌟 Carte 3 : Premium Card (Carte Ultra-Moderne)
+## 📊 Carte 3 : Mushroom avec Graphique
+
+### Description
+Version complète avec graphique historique. Idéale pour analyser l'évolution de la batterie.
+
+### Installation
+
+1. Copiez le contenu de `bmw_ix3_mushroom_with_graph.yaml`
+2. Allez dans votre **Dashboard**
+3. Mode édition > **Ajouter une carte** > **Manuel**
+4. Collez le code YAML
+5. Sauvegardez
+
+### Fonctionnalités
+
+- ✅ En-tête compact avec statut
+- ✅ Chips interactifs
+- ✅ Barre de progression batterie
+- ✅ Graphique historique 24h (nécessite mini-graph-card)
+- ✅ Contrôles rapides
+
+---
+
+## 🌟 Carte 4 : Premium Card (Carte Ultra-Moderne)
 
 ### Description
 Carte premium avec image dynamique qui change selon l'état de charge. Effets de lumière et animations avancées.
@@ -125,6 +158,24 @@ Carte premium avec image dynamique qui change selon l'état de charge. Effets de
 - **En charge** : Effet de pulsation lumineuse verte
 - **Batterie faible** : Fond rouge pour alerter
 - **Barre de progression** : Animation fluide du niveau de batterie
+
+---
+
+## 🎯 Recommandations d'Usage
+
+### Pour commencer (Recommandé)
+1. **Installez** : `card-mod` + `mushroom`
+2. **Utilisez** : `bmw_ix3_mushroom_card.yaml` (carte complète)
+3. **Alternative mobile** : `bmw_ix3_mushroom_compact.yaml`
+
+### Pour les utilisateurs avancés
+1. **Ajoutez** : `mini-graph-card` pour les graphiques
+2. **Utilisez** : `bmw_ix3_mushroom_with_graph.yaml`
+3. **Optionnel** : `button-card` pour la carte premium
+
+### Pour les utilisateurs minimalistes
+1. **Installez** : `card-mod` uniquement
+2. **Utilisez** : `bmw_ix3_simple_card.yaml` (composants de base)
 
 ---
 
