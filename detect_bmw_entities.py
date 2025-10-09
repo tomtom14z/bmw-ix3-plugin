@@ -40,7 +40,7 @@ Le plugin BMW iX3 recherche automatiquement ces entités :
 - **Batterie** : mots-clés (battery, soc, state_of_charge, charge_level, battery_percent)
 - **État de charge** : mots-clés (charging_status, charge_status, charging_state)
 - **Puissance** : mots-clés (charging_power, charge_power, power_kw)
-- **Autonomie** : mots-clés (range, autonomie, remaining_range, electric_range)
+- **Autonomie** : mots-clés (range, autonomie, remaining_range, electric_range, forecast_electric_range)
 
 ### Vos entités correspondantes :
 
@@ -68,7 +68,7 @@ Le plugin BMW iX3 recherche automatiquement ces entités :
 {% endfor %}
 {% endif %}
 
-{% set range_entities = bmw_entities | selectattr('entity_id', 'match', '.*(range|autonomie|remaining).*') | list -%}
+{% set range_entities = bmw_entities | selectattr('entity_id', 'match', '.*(range|autonomie|remaining|forecast_electric_range).*') | list -%}
 {% if range_entities %}
 **🛣️ Autonomie :**
 {% for entity in range_entities -%}

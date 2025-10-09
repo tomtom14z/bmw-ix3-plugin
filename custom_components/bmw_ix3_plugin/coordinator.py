@@ -128,7 +128,7 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
                 
                 # Autonomie électrique
                 elif any(keyword in entity_lower for keyword in 
-                        ["range", "autonomie", "remaining_range", "electric_range"]):
+                        ["range", "autonomie", "remaining_range", "electric_range", "forecast_electric_range"]):
                     try:
                         value = float(state.state)
                         if value >= 0:  # Validation
