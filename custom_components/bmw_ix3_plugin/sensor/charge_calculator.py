@@ -44,7 +44,7 @@ class ChargeTimeCalculator(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self) -> Optional[float]:
-        """Temps de charge calculé en minutes."""
+        """Temps de charge calculé en minutes (arrondi)."""
         if not self.coordinator.data:
             return None
         
@@ -54,12 +54,37 @@ class ChargeTimeCalculator(CoordinatorEntity, SensorEntity):
         if current_soc is None:
             return None
         
-        return self._calculate_charge_time(current_soc, self._target_soc, self._power_kw)
+        charge_time = self._calculate_charge_time(current_soc, self._target_soc, self._power_kw)
+        if charge_time is None:
+            return None
+        
+        # Arrondir à l'entier le plus proche
+        return round(charge_time)
 
     @property
     def native_unit_of_measurement(self) -> str:
         """Unité de mesure."""
         return "min"
+    
+    @property
+    def state(self) -> Optional[str]:
+        """Formatage du temps en heures + minutes pour l'affichage."""
+        value = self.native_value
+        if value is None:
+            return None
+        
+        if value == 0:
+            return "0 min"
+        
+        hours = int(value // 60)
+        minutes = int(value % 60)
+        
+        if hours > 0 and minutes > 0:
+            return f"{hours}h {minutes}min"
+        elif hours > 0:
+            return f"{hours}h"
+        else:
+            return f"{minutes}min"
 
     @property
     def icon(self) -> str:

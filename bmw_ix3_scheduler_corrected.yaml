@@ -1,0 +1,219 @@
+# Carte Planificateur de Charge BMW iX3 (CORRIGÉE)
+# Utilise les vrais capteurs et contrôles du plugin BMW iX3
+
+type: vertical-stack
+cards:
+  # En-tête
+  - type: custom:mushroom-template-card
+    primary: 🕐 Planificateur de Charge BMW iX3
+    secondary: |
+      Départ à {{ states('number.bmw_ix3_departure_time') or '08:00' }}h | 
+      SOC Cible : {{ states('number.bmw_ix3_target_soc') or '80' }}%
+    icon: mdi:calendar-clock
+    icon_color: purple
+    layout: horizontal
+    card_mod:
+      style: |
+        ha-card {
+          background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+          color: white;
+        }
+  
+  # Configuration rapide
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        entity: number.bmw_ix3_departure_time
+        icon: mdi:clock-outline
+        icon_color: purple
+        primary: Heure de Départ
+        secondary: '{{ states("number.bmw_ix3_departure_time") or "08:00" }}h'
+        tap_action:
+          action: more-info
+          entity: number.bmw_ix3_departure_time
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(156, 39, 176, 0.1);
+              backdrop-filter: blur(10px);
+            }
+      - type: custom:mushroom-template-card
+        entity: number.bmw_ix3_target_soc
+        icon: mdi:battery-charging
+        icon_color: orange
+        primary: SOC Cible
+        secondary: '{{ states("number.bmw_ix3_target_soc") or "80" }}%'
+        tap_action:
+          action: more-info
+          entity: number.bmw_ix3_target_soc
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(255, 193, 7, 0.1);
+              backdrop-filter: blur(10px);
+            }
+  
+  # Calculs de planification (basés sur les vrais capteurs)
+  - type: markdown
+    content: |
+      ## ⏰ Planification de Charge
+      
+      ### 🎯 Objectif
+      - **Départ prévu** : {{ states('number.bmw_ix3_departure_time') or '08:00' }}h
+      - **SOC cible** : {{ states('number.bmw_ix3_target_soc') or '80' }}%
+      - **SOC actuel** : {{ states('sensor.state_of_charge_last_known') }}%
+      
+      ### ⚡ Temps de Charge Disponibles
+      
+      | Puissance | Temps pour 80% | Temps pour 100% |
+      |-----------|----------------|-----------------|
+      | **7.4 kW** | {{ states('sensor.bmw_ix3_charge_time_80_7_4kw') or 'Calcul...' }} | {{ states('sensor.bmw_ix3_charge_time_100_7_4kw') or 'Calcul...' }} |
+      | **11 kW** | {{ states('sensor.bmw_ix3_charge_time_80_11kw') or 'Calcul...' }} | {{ states('sensor.bmw_ix3_charge_time_100_11kw') or 'Calcul...' }} |
+      | **22 kW** | {{ states('sensor.bmw_ix3_charge_time_80_22kw') or 'Calcul...' }} | {{ states('sensor.bmw_ix3_charge_time_100_22kw') or 'Calcul...' }} |
+      
+      ---
+      
+      ### 📊 Calcul de l'Heure de Branchement
+      
+      **Pour un départ à {{ states('number.bmw_ix3_departure_time') or '08:00' }}h :**
+      
+      - **Charge 7.4kW** : Brancher avant {{ states('sensor.bmw_ix3_charging_start_time_7_4kw') or 'Calcul...' }}
+      - **Charge 11kW** : Brancher avant {{ states('sensor.bmw_ix3_charging_start_time_11kw') or 'Calcul...' }}
+      - **Charge 22kW** : Brancher avant {{ states('sensor.bmw_ix3_charging_start_time_22kw') or 'Calcul...' }}
+      
+      ### 💡 Recommandations
+      - **Charge 7.4kW** : Idéal pour la nuit (économie + préservation batterie)
+      - **Charge 11kW** : Compromis vitesse/économie
+      - **Charge 22kW** : Charge rapide (si disponible)
+      
+      ---
+      
+      🔧 **Note** : Les calculs sont automatiques et incluent la courbe de charge BMW iX3
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border-radius: 15px;
+        }
+        ha-markdown {
+          padding: 20px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        th, td {
+          padding: 12px;
+          text-align: center;
+          border: 1px solid rgba(255,255,255,0.2);
+        }
+        th {
+          font-weight: bold;
+          background: rgba(156, 39, 176, 0.3);
+          color: white;
+        }
+        td {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+        h2 {
+          color: #9C27B0;
+          margin-top: 0;
+        }
+        h3 {
+          color: #4CAF50;
+          margin-top: 25px;
+        }
+  
+  # Actions rapides
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        icon: mdi:clock-fast
+        icon_color: green
+        primary: Départ 06h00
+        secondary: Charge 7.4kW
+        tap_action:
+          action: call-service
+          service: number.set_value
+          service_data:
+            entity_id: number.bmw_ix3_departure_time
+            value: 6
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(76, 175, 80, 0.1);
+              backdrop-filter: blur(10px);
+            }
+      - type: custom:mushroom-template-card
+        icon: mdi:clock-outline
+        icon_color: blue
+        primary: Départ 08h00
+        secondary: Charge 11kW
+        tap_action:
+          action: call-service
+          service: number.set_value
+          service_data:
+            entity_id: number.bmw_ix3_departure_time
+            value: 8
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(33, 150, 243, 0.1);
+              backdrop-filter: blur(10px);
+            }
+      - type: custom:mushroom-template-card
+        icon: mdi:clock-alert
+        icon_color: orange
+        primary: Départ 10h00
+        secondary: Charge 22kW
+        tap_action:
+          action: call-service
+          service: number.set_value
+          service_data:
+            entity_id: number.bmw_ix3_departure_time
+            value: 10
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(255, 193, 7, 0.1);
+              backdrop-filter: blur(10px);
+            }
+  
+  # Contrôles du plugin
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        entity: switch.bmw_ix3_auto_stop_80_percent
+        icon: mdi:battery-80
+        icon_color: |
+          {% if is_state('switch.bmw_ix3_auto_stop_80_percent', 'on') %}
+            green
+          {% else %}
+            grey
+          {% endif %}
+        primary: Auto 80%
+        secondary: |
+          {% if is_state('switch.bmw_ix3_auto_stop_80_percent', 'on') %}
+            ✅ Activé
+          {% else %}
+            ❌ Désactivé
+          {% endif %}
+        tap_action:
+          action: toggle
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(76, 175, 80, 0.1);
+              backdrop-filter: blur(10px);
+            }
+
+# Style général
+card_mod:
+  style: |
+    ha-card {
+      gap: 10px;
+    }
+

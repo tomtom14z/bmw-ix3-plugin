@@ -83,6 +83,7 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
             }
             
             detected_entities = []
+            battery_candidates = []  # Pour prioriser "last known" vs "predicted"
             
             # Parcourir toutes les entités pour trouver celles de BMW CarData
             for entity_id in hass.states.async_entity_ids():
@@ -98,20 +99,56 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
                 detected_entities.append(entity_id)
                 entity_name = state.name.lower()
                 
-                # Niveau de batterie - entités spécifiques BMW CarData
+                # Niveau de batterie - PRIORISER "last known" au lieu de "predicted"
                 if any(keyword in entity_name for keyword in [
                     "state of charge", "battery charge level", "soc"
                 ]):
                     try:
                         value = float(state.state)
                         if 0 <= value <= 100:  # Validation
-                            bmw_entities["battery_level"] = value
-                            _LOGGER.debug("Batterie trouvée: %s = %s%%", entity_id, value)
+                            # Prioriser "last known" sur "predicted"
+                            is_last_known = "last known" in entity_name
+                            battery_candidates.append({
+                                "entity_id": entity_id,
+                                "value": value,
+                                "priority": 1 if is_last_known else 2  # 1 = priorité haute
+                            })
+                            _LOGGER.debug("Batterie trouvée: %s = %s%% (last known: %s)", 
+                                         entity_id, value, is_last_known)
                     except (ValueError, TypeError):
                         pass
+            
+            # Sélectionner la meilleure entité batterie (priorité à "last known")
+            if battery_candidates:
+                # Trier par priorité (1 = last known, 2 = predicted)
+                battery_candidates.sort(key=lambda x: x["priority"])
+                best_battery = battery_candidates[0]
+                bmw_entities["battery_level"] = best_battery["value"]
+                _LOGGER.info("Batterie sélectionnée: %s = %s%% (priorité: %s)", 
+                           best_battery["entity_id"], best_battery["value"], 
+                           "last known" if best_battery["priority"] == 1 else "predicted")
+            
+            # Parcourir à nouveau pour les autres entités
+            for entity_id in hass.states.async_entity_ids():
+                # Recherche flexible : bmw, ix3, cardata, bimmerdata, etc.
+                entity_lower = entity_id.lower()
+                if not any(keyword in entity_lower for keyword in ["bmw", "ix3", "cardata", "bimmerdata"]):
+                    continue
+                
+                state = hass.states.get(entity_id)
+                if not state or state.state in ("unknown", "unavailable", "None"):
+                    continue
+                
+                entity_name = state.name.lower()
+                
+                # Ignorer les entités de batterie déjà traitées
+                if any(keyword in entity_name for keyword in [
+                    "state of charge", "battery charge level", "soc"
+                ]):
+                    continue  # Déjà traité dans la première boucle
                 
                 # État de charge - entités spécifiques BMW CarData
-                elif any(keyword in entity_name for keyword in [
+                if any(keyword in entity_name for keyword in [
                     "charging status", "hv charging status"
                 ]):
                     status = state.state.upper()

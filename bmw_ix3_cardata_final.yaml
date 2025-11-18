@@ -1,4 +1,4 @@
-# Carte BMW iX3 optimisée pour BMW CarData HA
+# Carte BMW iX3 finale avec les vrais noms d'entités BMW CarData HA
 # Nécessite : card-mod + mushroom (HACS)
 
 type: vertical-stack
@@ -209,3 +209,4 @@ card_mod:
     ha-card {
       gap: 10px;
     }
+

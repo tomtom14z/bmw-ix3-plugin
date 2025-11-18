@@ -1,5 +1,22 @@
 # Changelog - Plugin BMW iX3 pour Home Assistant
 
+## [1.0.3] - 2025-01-XX
+
+### 🐛 Corrections de bugs
+- **Priorisation SOC** : Le plugin utilise maintenant "State of Charge (Last Known)" au lieu de "Predicted on BMW SIDE" qui restait figé
+- **Formatage des temps de charge** : Les temps de charge sont maintenant affichés en format lisible "Xh Ymin" au lieu de minutes avec 12 décimales
+- Les temps de charge sont arrondis à l'entier le plus proche pour plus de clarté
+
+### 🔧 Améliorations
+- Détection intelligente avec priorisation : "Last Known" est toujours préféré à "Predicted" pour le niveau de batterie
+- Formatage automatique des temps : affichage en heures + minutes (ex: "2h 30min", "1h", "45min")
+- Logs améliorés indiquant quelle entité SOC a été sélectionnée et pourquoi
+
+### 📦 Nouvelles cartes
+- `bmw_ix3_simple_controls.yaml` : Carte avec contrôles interactifs utilisant uniquement les composants natifs (pas de dépendances HACS)
+- `bmw_ix3_interactive_controls.yaml` : Carte avec boutons et sliders interactifs (nécessite Mushroom + Button Card)
+- `bmw_ix3_advanced_controls.yaml` : Carte avancée avec recommandations intelligentes (nécessite Mushroom + Button Card)
+
 ## [1.0.2] - 2025-10-06
 
 ### ✨ Nouvelles fonctionnalités

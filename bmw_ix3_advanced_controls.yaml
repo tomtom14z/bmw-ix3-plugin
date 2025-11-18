@@ -1,0 +1,259 @@
+# Carte BMW iX3 avec Sliders et Contrôles Avancés
+# Nécessite : card-mod + mushroom + button-card (HACS)
+
+type: vertical-stack
+cards:
+  # En-tête
+  - type: custom:mushroom-template-card
+    primary: 🎚️ Contrôles Avancés BMW iX3
+    secondary: |
+      SOC Actuel : {{ states('sensor.state_of_charge_last_known') }}% | 
+      SOC Cible : {{ states('number.bmw_ix3_target_soc') or '80' }}%
+    icon: mdi:tune
+    icon_color: purple
+    layout: horizontal
+    card_mod:
+      style: |
+        ha-card {
+          background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+          color: white;
+        }
+  
+  # Slider SOC Cible
+  - type: custom:mushroom-template-card
+    primary: 🎯 SOC Cible
+    secondary: |
+      Valeur actuelle : {{ states('number.bmw_ix3_target_soc') or '80' }}%
+      {% set soc = states('number.bmw_ix3_target_soc') | int %}
+      {% if soc <= 80 %}
+        💚 Recommandé pour la durée de vie
+      {% elif soc <= 90 %}
+        🟡 Bon pour les longs trajets
+      {% else %}
+        🔴 Charge complète (usage occasionnel)
+      {% endif %}
+    icon: mdi:battery-charging
+    icon_color: |
+      {% set soc = states('number.bmw_ix3_target_soc') | int %}
+      {% if soc <= 80 %}green
+      {% elif soc <= 90 %}orange
+      {% else %}red
+      {% endif %}
+    tap_action:
+      action: more-info
+      entity: number.bmw_ix3_target_soc
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 15px;
+        }
+  
+  # Slider Heure de Départ
+  - type: custom:mushroom-template-card
+    primary: ⏰ Heure de Départ
+    secondary: |
+      Valeur actuelle : {{ states('number.bmw_ix3_departure_time') or '08:00' }}h
+      {% set hour = states('number.bmw_ix3_departure_time') | int %}
+      {% if hour <= 6 %}
+        🌙 Charge nocturne (7.4kW recommandé)
+      {% elif hour <= 8 %}
+        🌅 Charge matinale (11kW recommandé)
+      {% else %}
+        ☀️ Charge rapide (22kW recommandé)
+      {% endif %}
+    icon: mdi:clock-outline
+    icon_color: |
+      {% set hour = states('number.bmw_ix3_departure_time') | int %}
+      {% if hour <= 6 %}green
+      {% elif hour <= 8 %}blue
+      {% else %}orange
+      {% endif %}
+    tap_action:
+      action: more-info
+      entity: number.bmw_ix3_departure_time
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 15px;
+        }
+  
+  # Boutons de configuration rapide
+  - type: horizontal-stack
+    cards:
+      - type: custom:button-card
+        name: Configuration Économique
+        icon: mdi:leaf
+        tap_action:
+          action: call-service
+          service: number.set_value
+          service_data:
+            entity_id: number.bmw_ix3_target_soc
+            value: 80
+        styles:
+          card:
+            - background: rgba(76, 175, 80, 0.2)
+            - border-radius: 15px
+            - color: white
+            - border: 2px solid rgba(76, 175, 80, 0.5)
+          icon:
+            - color: green
+        custom_fields:
+          name:
+            card:
+              type: markdown
+              content: |
+                ## 🌱 Économique
+                SOC 80%<br>Départ 08h
+      - type: custom:button-card
+        name: Configuration Standard
+        icon: mdi:car
+        tap_action:
+          action: call-service
+          service: number.set_value
+          service_data:
+            entity_id: number.bmw_ix3_target_soc
+            value: 90
+        styles:
+          card:
+            - background: rgba(33, 150, 243, 0.2)
+            - border-radius: 15px
+            - color: white
+            - border: 2px solid rgba(33, 150, 243, 0.5)
+          icon:
+            - color: blue
+        custom_fields:
+          name:
+            card:
+              type: markdown
+              content: |
+                ## 🚗 Standard
+                SOC 90%<br>Départ 08h
+      - type: custom:button-card
+        name: Configuration Voyage
+        icon: mdi:map-marker-distance
+        tap_action:
+          action: call-service
+          service: number.set_value
+          service_data:
+            entity_id: number.bmw_ix3_target_soc
+            value: 100
+        styles:
+          card:
+            - background: rgba(255, 193, 7, 0.2)
+            - border-radius: 15px
+            - color: white
+            - border: 2px solid rgba(255, 193, 7, 0.5)
+          icon:
+            - color: orange
+        custom_fields:
+          name:
+            card:
+              type: markdown
+              content: |
+                ## 🛣️ Voyage
+                SOC 100%<br>Départ 06h
+  
+  # Contrôles de charge
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        entity: switch.bmw_ix3_auto_stop_80_percent
+        icon: mdi:battery-80
+        icon_color: |
+          {% if is_state('switch.bmw_ix3_auto_stop_80_percent', 'on') %}
+            green
+          {% else %}
+            grey
+          {% endif %}
+        primary: Arrêt Auto 80%
+        secondary: |
+          {% if is_state('switch.bmw_ix3_auto_stop_80_percent', 'on') %}
+            ✅ Activé - Protection batterie
+          {% else %}
+            ❌ Désactivé
+          {% endif %}
+        tap_action:
+          action: toggle
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(76, 175, 80, 0.1);
+              backdrop-filter: blur(10px);
+            }
+      - type: custom:button-card
+        name: Calculer Planification
+        icon: mdi:calculator
+        tap_action:
+          action: call-service
+          service: bmw_ix3_plugin.schedule_charging
+        styles:
+          card:
+            - background: rgba(156, 39, 176, 0.2)
+            - border-radius: 15px
+            - color: white
+            - border: 2px solid rgba(156, 39, 176, 0.5)
+          icon:
+            - color: purple
+        custom_fields:
+          name:
+            card:
+              type: markdown
+              content: |
+                ## 🧮 Calculer
+                Planification<br>automatique
+  
+  # Affichage des résultats
+  - type: markdown
+    content: |
+      ## 📊 Résultats de Planification
+      
+      ### 🎯 Configuration Actuelle
+      - **SOC Cible** : {{ states('number.bmw_ix3_target_soc') or '80' }}%
+      - **Heure de Départ** : {{ states('number.bmw_ix3_departure_time') or '08:00' }}h
+      - **SOC Actuel** : {{ states('sensor.state_of_charge_last_known') }}%
+      
+      ### ⏱️ Temps de Charge Estimés
+      - **7.4kW** : {{ states('sensor.bmw_ix3_charge_time_80_7_4kw') or 'Calcul...' }} (80%) | {{ states('sensor.bmw_ix3_charge_time_100_7_4kw') or 'Calcul...' }} (100%)
+      - **11kW** : {{ states('sensor.bmw_ix3_charge_time_80_11kw') or 'Calcul...' }} (80%) | {{ states('sensor.bmw_ix3_charge_time_100_11kw') or 'Calcul...' }} (100%)
+      - **22kW** : {{ states('sensor.bmw_ix3_charge_time_80_22kw') or 'Calcul...' }} (80%) | {{ states('sensor.bmw_ix3_charge_time_100_22kw') or 'Calcul...' }} (100%)
+      
+      ### 💡 Recommandation
+      {% set soc = states('number.bmw_ix3_target_soc') | int %}
+      {% set hour = states('number.bmw_ix3_departure_time') | int %}
+      {% if soc <= 80 and hour >= 8 %}
+        🌱 **Configuration optimale** : Charge économique avec préservation de la batterie
+      {% elif soc <= 90 and hour >= 6 %}
+        🚗 **Configuration équilibrée** : Bon compromis autonomie/durée de vie
+      {% else %}
+        🛣️ **Configuration voyage** : Charge complète pour longs trajets
+      {% endif %}
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border-radius: 15px;
+        }
+        ha-markdown {
+          padding: 20px;
+        }
+        h2 {
+          color: #9C27B0;
+          margin-top: 0;
+        }
+        h3 {
+          color: #4CAF50;
+          margin-top: 25px;
+        }
+
+# Style général
+card_mod:
+  style: |
+    ha-card {
+      gap: 10px;
+    }
+

@@ -1,0 +1,133 @@
+# Carte Tableau des Temps de Recharge BMW iX3 (CORRIGÉE)
+# Utilise les vrais capteurs créés par le plugin BMW iX3
+
+type: vertical-stack
+cards:
+  # En-tête
+  - type: custom:mushroom-template-card
+    primary: ⏱️ Temps de Recharge BMW iX3
+    secondary: |
+      SOC Actuel : {{ states('sensor.state_of_charge_last_known') }}% | 
+      SOC Cible : {{ states('number.bmw_ix3_target_soc') or '80' }}%
+    icon: mdi:clock-outline
+    icon_color: blue
+    layout: horizontal
+    card_mod:
+      style: |
+        ha-card {
+          background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+          color: white;
+        }
+  
+  # Tableau des temps de recharge (VRAIS capteurs du plugin)
+  - type: markdown
+    content: |
+      ## 🔋 Temps de Recharge Estimés
+      
+      | Puissance | 80% | 100% |
+      |-----------|-----|------|
+      | **3.7 kW** | {{ states('sensor.bmw_ix3_charge_time_80_3_7kw') or 'Calcul...' }} | {{ states('sensor.bmw_ix3_charge_time_100_3_7kw') or 'Calcul...' }} |
+      | **7.4 kW** | {{ states('sensor.bmw_ix3_charge_time_80_7_4kw') or 'Calcul...' }} | {{ states('sensor.bmw_ix3_charge_time_100_7_4kw') or 'Calcul...' }} |
+      | **11 kW** | {{ states('sensor.bmw_ix3_charge_time_80_11kw') or 'Calcul...' }} | {{ states('sensor.bmw_ix3_charge_time_100_11kw') or 'Calcul...' }} |
+      | **22 kW** | {{ states('sensor.bmw_ix3_charge_time_80_22kw') or 'Calcul...' }} | {{ states('sensor.bmw_ix3_charge_time_100_22kw') or 'Calcul...' }} |
+      
+      ---
+      
+      ### 📊 Informations Actuelles
+      - **SOC Actuel** : {{ states('sensor.state_of_charge_last_known') }}%
+      - **SOC Cible** : {{ states('number.bmw_ix3_target_soc') or '80' }}%
+      - **État de charge** : {{ states('sensor.charging_status') or 'N/A' }}
+      - **Temps restant** : {{ states('sensor.charging_time_remaining') or 'N/A' }}
+      
+      ### 💡 Recommandations
+      - **Charge optimale** : 7.4kW pour la durée de vie de la batterie
+      - **Charge rapide** : 11kW pour les besoins urgents
+      - **Charge ultra-rapide** : 22kW (si disponible)
+      
+      ---
+      
+      🔧 **Note** : Les temps sont calculés automatiquement par le plugin BMW iX3
+    card_mod:
+      style: |
+        ha-card {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border-radius: 15px;
+        }
+        ha-markdown {
+          padding: 20px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        th, td {
+          padding: 12px;
+          text-align: center;
+          border: 1px solid rgba(255,255,255,0.2);
+        }
+        th {
+          font-weight: bold;
+          background: rgba(33, 150, 243, 0.3);
+          color: white;
+        }
+        td {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+        h2 {
+          color: #2196F3;
+          margin-top: 0;
+        }
+        h3 {
+          color: #4CAF50;
+          margin-top: 25px;
+        }
+  
+  # Contrôles rapides
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        entity: number.bmw_ix3_target_soc
+        icon: mdi:battery-charging
+        icon_color: orange
+        primary: SOC Cible
+        secondary: '{{ states("number.bmw_ix3_target_soc") }}%'
+        tap_action:
+          action: more-info
+          entity: number.bmw_ix3_target_soc
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(255, 193, 7, 0.1);
+              backdrop-filter: blur(10px);
+            }
+      - type: custom:mushroom-template-card
+        entity: sensor.state_of_charge_last_known
+        icon: mdi:battery
+        icon_color: |
+          {% set level = states('sensor.state_of_charge_last_known') | int %}
+          {% if level >= 80 %}green
+          {% elif level >= 50 %}orange
+          {% else %}red
+          {% endif %}
+        primary: SOC Actuel
+        secondary: '{{ states("sensor.state_of_charge_last_known") }}%'
+        tap_action:
+          action: more-info
+          entity: sensor.state_of_charge_last_known
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(76, 175, 80, 0.1);
+              backdrop-filter: blur(10px);
+            }
+
+# Style général
+card_mod:
+  style: |
+    ha-card {
+      gap: 10px;
+    }
+
