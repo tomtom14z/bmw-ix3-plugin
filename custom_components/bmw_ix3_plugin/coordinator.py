@@ -17,6 +17,7 @@ from .const import (
     CONF_V2C_USERNAME,
     CONF_V2C_PASSWORD,
 )
+from .charge_learning import ChargeLearning
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,10 +25,14 @@ _LOGGER = logging.getLogger(__name__)
 class BMWiX3Coordinator(DataUpdateCoordinator):
     """Coordinateur pour les données BMW iX3 et V2C."""
 
-    def __init__(self, hass: HomeAssistant, config: Dict[str, Any]) -> None:
+    def __init__(self, hass: HomeAssistant, config: Dict[str, Any], entry_id: str) -> None:
         """Initialise le coordinateur."""
         self.config = config
+        self.entry_id = entry_id
         self.session: Optional[aiohttp.ClientSession] = None
+        
+        # Système d'apprentissage
+        self.charge_learning = ChargeLearning(hass, entry_id)
         
         # Intervalle de mise à jour dynamique
         update_interval = timedelta(seconds=UPDATE_INTERVAL)
@@ -80,6 +85,8 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
                 "charging_status": None,
                 "charging_power": None,
                 "range_electric": None,
+                "charging_time_remaining": None,
+                "target_soc": None,
             }
             
             detected_entities = []
@@ -178,6 +185,39 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
                             _LOGGER.debug("Autonomie trouvée: %s = %s km", entity_id, value)
                     except (ValueError, TypeError):
                         pass
+                
+                # Temps restant de charge - entités spécifiques BMW CarData
+                elif any(keyword in entity_name for keyword in [
+                    "charging time remaining", "time remaining"
+                ]):
+                    try:
+                        # Peut être en minutes ou format "HH:MM"
+                        value_str = state.state
+                        if ":" in value_str:
+                            # Format "HH:MM"
+                            parts = value_str.split(":")
+                            hours = int(parts[0])
+                            minutes = int(parts[1])
+                            value = hours * 60 + minutes
+                        else:
+                            value = float(value_str)
+                        if value >= 0:  # Validation
+                            bmw_entities["charging_time_remaining"] = value
+                            _LOGGER.debug("Temps restant trouvé: %s = %s min", entity_id, value)
+                    except (ValueError, TypeError):
+                        pass
+                
+                # SOC cible - entités spécifiques BMW CarData
+                elif any(keyword in entity_name for keyword in [
+                    "target state of charge", "target soc", "target charge"
+                ]):
+                    try:
+                        value = float(state.state)
+                        if 0 <= value <= 100:  # Validation
+                            bmw_entities["target_soc"] = value
+                            _LOGGER.debug("SOC cible trouvé: %s = %s%%", entity_id, value)
+                    except (ValueError, TypeError):
+                        pass
             
             # Log des entités détectées
             if detected_entities:
@@ -191,8 +231,20 @@ class BMWiX3Coordinator(DataUpdateCoordinator):
                 "charging_status": bmw_entities.get("charging_status") or "UNKNOWN",
                 "charging_power": bmw_entities.get("charging_power") or 0.0,
                 "range_electric": bmw_entities.get("range_electric") or 0.0,
+                "charging_time_remaining": bmw_entities.get("charging_time_remaining"),
+                "target_soc": bmw_entities.get("target_soc"),
                 "last_update": datetime.now().isoformat(),
             }
+            
+            # Enregistrer les données pour l'apprentissage si en charge
+            if bmw_data["charging_status"] == "CHARGING":
+                self.charge_learning.record_charging_data(
+                    soc=bmw_data["battery_level"],
+                    time_remaining=bmw_data.get("charging_time_remaining"),
+                    power_kw=bmw_data["charging_power"],
+                    target_soc=bmw_data.get("target_soc") or 100.0,
+                    charging_status=bmw_data["charging_status"],
+                )
             
             _LOGGER.info("🚗 BMW iX3 - Batterie: %s%%, État: %s, Autonomie: %s km", 
                         bmw_data["battery_level"], bmw_data["charging_status"], bmw_data["range_electric"])

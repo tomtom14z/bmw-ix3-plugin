@@ -1,5 +1,22 @@
 # Changelog - Plugin BMW iX3 pour Home Assistant
 
+## [1.0.5] - 2025-01-XX
+
+### ✨ Nouvelles fonctionnalités
+- **🧠 Système d'apprentissage automatique** : Le plugin apprend maintenant des vraies données de recharge pour améliorer la précision des prédictions
+- **📊 Enregistrement automatique** : Enregistre les données de recharge (SOC, temps restant, puissance, SOC cible) pendant chaque session
+- **🎯 Prédiction intelligente** : Utilise les données apprises en priorité, avec fallback sur calcul théorique
+- **📈 Amélioration progressive** : Les prédictions s'améliorent avec le temps (après 2+ sessions)
+
+### 🔧 Améliorations
+- **Détection étendue** : Détection automatique de `charging_time_remaining` et `target_state_of_charge` depuis BMW CarData
+- **Catégorisation par chargeur** : Organisation des données par type de chargeur (7kW, 11kW, 22kW, 50kW, 150kW)
+- **Courbes d'apprentissage** : Construction automatique de courbes SOC → Temps restant par type de chargeur
+- **Stockage persistant** : Données stockées dans `/config/bmw_ix3_learning/` pour persistance entre redémarrages
+
+### 📝 Documentation
+- Nouveau guide `APPRENTISSAGE_CHARGE.md` expliquant le fonctionnement du système d'apprentissage
+
 ## [1.0.4] - 2025-01-XX
 
 ### 🐛 Corrections de bugs

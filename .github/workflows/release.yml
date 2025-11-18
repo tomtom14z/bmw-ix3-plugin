@@ -14,26 +14,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract version from tag
-        id: tag_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
       - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Release v${{ steps.tag_version.outputs.VERSION }}
-          body: |
-            ## Version ${{ steps.tag_version.outputs.VERSION }}
-            
-            Consultez le [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) pour les détails complets.
-            
-            ### Installation via HACS
-            Cette version sera automatiquement détectée par HACS. Si elle n'apparaît pas immédiatement :
-            1. Allez dans **HACS** → **Intégrations**
-            2. Cliquez sur les **3 points** (⋮) → **Mettre à jour les informations**
-            3. Recherchez "BMW iX3 Plugin" et cliquez sur **Mettre à jour**
-          draft: false
-          prerelease: false
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
 

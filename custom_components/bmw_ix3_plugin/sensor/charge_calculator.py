@@ -137,6 +137,18 @@ class ChargeTimeCalculator(CoordinatorEntity, SensorEntity):
         if current_soc >= target_soc:
             return 0.0
         
+        # Essayer d'abord d'utiliser les données d'apprentissage
+        if hasattr(self.coordinator, 'charge_learning'):
+            learned_time = self.coordinator.charge_learning.predict_charge_time(
+                current_soc=current_soc,
+                target_soc=target_soc,
+                power_kw=power_kw,
+            )
+            if learned_time is not None:
+                _LOGGER.debug("Utilisation des données d'apprentissage: %s min", learned_time)
+                return learned_time
+        
+        # Sinon, utiliser le calcul théorique
         # Calcul de l'énergie nécessaire (kWh)
         energy_needed = (target_soc - current_soc) / 100.0 * BATTERY_CAPACITY
         
@@ -157,4 +169,5 @@ class ChargeTimeCalculator(CoordinatorEntity, SensorEntity):
             
             charge_time_hours = time_to_80 + time_above_80
         
+        _LOGGER.debug("Utilisation du calcul théorique: %s min", charge_time_hours * 60)
         return charge_time_hours * 60  # Conversion en minutes
