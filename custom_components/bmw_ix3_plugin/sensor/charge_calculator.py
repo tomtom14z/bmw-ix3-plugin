@@ -63,8 +63,8 @@ class ChargeTimeCalculator(CoordinatorEntity, SensorEntity):
 
     @property
     def native_unit_of_measurement(self) -> str:
-        """Unité de mesure."""
-        return "min"
+        """Unité de mesure - vide car on formate dans state()."""
+        return ""
     
     @property
     def state(self) -> Optional[str]:

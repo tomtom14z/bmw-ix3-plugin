@@ -5,6 +5,7 @@
 ### 🐛 Corrections de bugs
 - **Priorisation SOC** : Le plugin utilise maintenant "State of Charge (Last Known)" au lieu de "Predicted on BMW SIDE" qui restait figé
 - **Formatage des temps de charge** : Les temps de charge sont maintenant affichés en format lisible "Xh Ymin" au lieu de minutes avec 12 décimales
+- **Correction double "min"** : Correction de l'affichage "Xh Ymin min" → maintenant "Xh Ymin" correctement formaté
 - Les temps de charge sont arrondis à l'entier le plus proche pour plus de clarté
 
 ### 🔧 Améliorations
